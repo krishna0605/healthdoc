@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medibot</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="assests/medibot  logo svg .png"> <!-- Add your logo image for the browser tab -->
+    <style>
+        /* Custom styles */
+        /* General Styling */
+        body {
+            background-color: #adabbf;
+            color: #1d201c;
+        }
+
+        a:hover {
+            color: #565656;
+        }
+
+        /* Sticky Navbar */
+        .sticky {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            animation: fadeInDown 0.5s;
+        }
+
+        @keyframes fadeInDown {
+            0% {
+                transform: translateY(-100%);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+ /* Customer Feedback Hover Animation */
+ .customer-feedback:hover {
+        transform: translateY(-5px);
+        transition: transform 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Submit Button Hover Animation */
+    .submit-btn {
+        transition: background-color 0.3s ease, color 0.3s ease; /* Added color transition */
+        background-color: #50C4ED;
+        color: #ffffff; /* Set initial text color */
+    }
+
+    .submit-btn:hover {
+        background-color: #FBA834;
+        color: #ffffff; /* Change text color on hover */
+    }
+        /* Logo Hover Animation */
+        .logo img:hover {
+            transform: scale(1.1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Navigation Links Hover */
+        .nav-link:hover {
+            color: #565656 !important;
+        }
+
+        /* Button Animation */
+.animated-btn {
+    transition: background-color 0.3s ease, color 0.3s ease; 
+    background-color: #a5a3c8;
+    color: #1d201c; /* Set initial text color */
+}
+
+.animated-btn:hover {
+    background-color: #565656;
+    color: #ffffff; /* Change text color on hover */
+}
+
+/* Card Hover Effect */
+.card:hover {
+            transform: translateY(-5px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Blur Background */
+        .blur-bg {
+            background-color: rgba(56, 122, 223, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #50C4ED;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #387ADF;
+        }
+
+        /* Ensure scrollbar works */
+        body {
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <nav class="bg-gray-300 p-4 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <!-- Logo -->
+            <a href="/" class="flex items-center text-gray-800 text-lg font-bold logo">
+                <img src="assests/medibot  logo svg .png" alt="Medibot Logo" class="w-12 h-12 mr-2"> <!-- Adjust the width and height as needed -->
+            </a>
+            <!-- Navigation Links -->
+            <div class="flex items-center space-x-6">
+                <a href="#" class="text-gray-800 hover:text-gray-600 nav-link">About Us</a>
+                <a href="#" class="text-gray-800 hover:text-gray-600 nav-link">Help</a>
+                <a href="#" class="text-gray-800 hover:text-gray-600 nav-link">Blogs</a>
+                <a href="#" class="text-gray-800 hover:text-gray-600 nav-link">Sign In</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- First Content Section -->
+    <section class="py-20 md:py-32 bg-gray-300">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center">
+            <!-- Text Content -->
+            <div class="md:w-1/2 text-center md:text-left mb-8 md:mb-0 text-gray-800 md:pr-8">
+                <h1 class="text-4xl md:text-5xl font-bold leading-tight">
+                    We're <strong>determined</strong> for<br />
+                    your&nbsp;<strong>better life.</strong>
+                </h1>
+                <p class="text-gray-800 mt-4 text-lg">
+                    Medi-Bot redefines healthcare accessibility through its advanced medical chatbot that focuses on lung cancer detection. Our chatbot leverages AI to swiftly analyze symptoms, working seamlessly with your provided reports. Access reliable information, ensuring a confidential and user-friendly experience.
+                </p>
+                <a href="demo.html" class="block mt-8 text-white font-bold py-4 px-6 rounded-full shadow-lg animated-btn text-center">Try Our AI Bot Demo</a>
+            </div>
+            <!-- Image -->
+            <div class="md:w-1/2 text-center md:text-right">
+                <img src="assests/AI-chat-5-1200x675.png" alt="Medibot Image" class="max-w-full md:mx-auto md:ml-auto rounded-lg shadow-lg hover:scale-110 transition-transform duration-300">
+            </div>
+        </div>
+    </section>
+
+        
+    <!-- Second Content Section -->
+    <section class="py-20 md:py-32 bg-gray-300">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-semibold mb-8">Our Services</h2>
+            <div class="flex flex-wrap -mx-4">
+                <!-- Card 1: Appointment and Medical Handling -->
+                <div class="w-full md:w-1/2 lg:w-1/3 px-4 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow-lg card hover:bg-gray-100">
+                        <div class="flex items-center mb-4">
+                            <!-- Icon -->
+                            <svg class="w-10 h-10 fill-current text-blue-400 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M10 2a8 8 0 0 0-5.066 13.61 1 1 0 1 0 1.732-1.02A6 6 0 1 1 10 4v6a1 1 0 1 0 2 0V4a8 8 0 0 0 0 16 1 1 0 1 0 0-2 6 6 0 0 1 0-12zm1 10a1 1 0 0 0-1 1v3a1 1 0 1 0 2 0v-3a1 1 0 0 0-1-1zm-1-7a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+                            <!-- Heading -->
+                            <h3 class="text-lg font-semibold">Appointment and Medical Handling</h3>
+                        </div>
+                        <!-- Description -->
+                        <p class="text-gray-700">Easily schedule appointments and manage medical records with our intuitive interface.</p>
+                    </div>
+                </div>
+
+                <!-- Card 2: Reminders -->
+                <div class="w-full md:w-1/2 lg:w-1/3 px-4 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow-lg card hover:bg-gray-100">
+                        <div class="flex items-center mb-4">
+                            <!-- Icon -->
+                            <svg class="w-10 h-10 fill-current text-blue-400 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M14.9 11.64l-6-3A1 1 0 0 0 8 9.64v4.37a1 1 0 0 0 1.5.87l6-3a1 1 0 0 0 0-1.74zM4 5h10a3 3 0 0 1 3 3v5a1 1 0 0 0 2 0V8a5 5 0 0 0-5-5H4a1 1 0 1 0 0 2z"/></svg>
+                            <!-- Heading -->
+                            <h3 class="text-lg font-semibold">Reminders</h3>
+                        </div>
+                        <!-- Description -->
+                        <p class="text-gray-700">Set up medication and appointment reminders to stay on top of your health.</p>
+                    </div>
+                </div>
+
+                <!-- Card 3: Support -->
+                <div class="w-full md:w-1/2 lg:w-1/3 px-4 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow-lg card hover:bg-gray-100">
+                        <div class="flex items-center mb-4">
+                            <!-- Icon -->
+                            <svg class="w-10 h-10 fill-current text-blue-400 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M15 5a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm-4 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm0 3a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM7 5a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm8 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm-6 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm0 3a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm8-9a1 1 0 1 0-2 0 1 1 0 0 0 2 0zM7 8a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+                            <!-- Heading -->
+                            <h3 class="text-lg font-semibold">Support</h3>
+                        </div>
+                        <!-- Description -->
+                        <p class="text-gray-700">Receive dedicated support from our team of professionals to address your queries and concerns.</p>
+                    </div>
+                </div>
+
+                <!-- Card 4: Follow Up -->
+                <div class="w-full md:w-1/2 lg:w-1/3 px-4 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow-lg card hover:bg-gray-100">
+                        <div class="flex items-center mb-4">
+                            <!-- Icon -->
+                            <svg class="w-10 h-10 fill-current text-blue-400 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.998 1.84a1 1 0 0 0-1.582-.812l-7 6A1 1 0 0 0 2 8v4a1 1 0 0 0 .416.81l7 5a1 1 0 0 0 1.168-.036A1 1 0 0 0 11 17V5a1 1 0 0 0-.416-.81zM19 10l-7-5v10l7-5z"/></svg>
+                            <!-- Heading -->
+                            <h3 class="text-lg font-semibold">Follow Up</h3>
+                        </div>
+                        <!-- Description -->
+                        <p class="text-gray-700">Stay connected with our healthcare professionals for personalized follow-up care.</p>
+                    </div>
+                </div>
+
+                <!-- Card 5: Automated Support 24/7 -->
+                <div class="w-full md:w-1/2 lg:w-1/3 px-4 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow-lg card hover:bg-gray-100">
+                        <div class="flex items-center mb-4">
+                            <!-- Icon -->
+                            <svg class="w-10 h-10 fill-current text-blue-400 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M10 2a8 8 0 0 0-5.066 13.61 1 1 0 1 0 1.732-1.02A6 6 0 1 1 10 4v6a1 1 0 1 0 2 0V4a8 8 0 0 0 0 16 1 1 0 1 0 0-2 6 6 0 0 1 0-12zm1 10a1 1 0 0 0-1 1v3a1 1 0 1 0 2 0v-3a1 1 0 0 0-1-1zm-1-7a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+                            <!-- Heading -->
+                            <h3 class="text-lg font-semibold">Automated Support 24/7</h3>
+                        </div>
+                        <!-- Description -->
+                        <p class="text-gray-700">Access automated support and information round the clock, whenever you need it.</p>
+                    </div>
+                </div>
+
+                <!-- Card 6: Privacy & Security Policy -->
+                <div class="w-full md:w-1/2 lg:w-1/3 px-4 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow-lg card hover:bg-gray-100">
+                        <div class="flex items-center mb-4">
+                            <!-- Icon -->
+                            <svg class="w-10 h-10 fill-current text-blue-400 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M10 2a8 8 0 0 0-5.066 13.61 1 1 0 1 0 1.732-1.02A6 6 0 1 1 10 4v6a1 1 0 1 0 2 0V4a8 8 0 0 0 0 16 1 1 0 1 0 0-2 6 6 0 0 1 0-12zm1 10a1 1 0 0 0-1 1v3a1 1 0 1 0 2 0v-3a1 1 0 0 0-1-1zm-1-7a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+                            <!-- Heading -->
+                            <h3 class="text-lg font-semibold">Privacy & Security Policy</h3>
+                        </div>
+                        <!-- Description -->
+                        <p class="text-gray-700">Rest assured with our robust privacy and security measures to safeguard your data.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- Second Content Section -->
+    <section class="bg-gray-300 text-white py-20 md:py-32">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center">
+            <!-- Text Content -->
+            <div class="md:w-1/2 text-center md:text-left mb-8 md:mb-0 md:pr-8">
+                <h2 class=" text-gray-800 text-4xl md:text-5xl font-bold leading-tight">
+                    We are developing a healthcare <br />system around you
+                </h2>
+                <p class="text-gray-800 mt-4 text-lg">
+                    The website focuses on respiratory health, specifically early detection of lung cancer.
+                    Provides an intuitive and easy-to-navigate interface for a seamless user experience.
+                    Incorporates AI algorithms for real-time analysis of respiratory symptoms.
+
+                </p>
+                <a href="#" class="block mt-8 text-white font-bold py-4 px-6 rounded-full shadow-lg animated-btn text-center">Learn More</a>
+            </div>
+            <!-- Image -->
+            <div class="md:w-1/2 text-center md:text-right">
+                <img src="assests/feature-image16-1024x631 copy.png" alt="Image" class="max-w-full md:mx-auto md:ml-auto rounded-lg shadow-lg hover:scale-110 transition-transform duration-300">
+            </div>
+        </div>
+    </section>
+
+
+    <!-- third Content Section: Features -->
+<section class="py-20 md:py-32 bg-gray-300">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-semibold mb-8">Features</h2>
+        <div class="flex flex-wrap -mx-4">
+            <!-- Inner Div 1: Security Detail -->
+            <div class="w-full md:w-1/2 px-4 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col md:flex-row items-center">
+                    <!-- Text Content -->
+                    <div class="md:w-1/2 text-left">
+                        <h3 class="text-lg font-semibold mb-4">Security Detail</h3>
+                        <p class="text-gray-700">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ultricies turpis vel lacus tristique, sit amet blandit urna consequat.</p>
+                    </div>
+                    <!-- Image -->
+                    <div class="md:w-1/2 mt-4 md:mt-0">
+                        <img src="security_image.jpg" alt="Security Detail Image" class="w-full h-auto rounded-lg shadow-lg">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inner Div 2: Increase Efficiency -->
+            <div class="w-full md:w-1/2 px-4 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col md:flex-row items-center">
+                    <!-- Image -->
+                    <div class="md:w-1/2 md:order-2 mt-4 md:mt-0">
+                        <img src="efficiency_image.jpg" alt="Increase Efficiency Image" class="w-full h-auto rounded-lg shadow-lg">
+                    </div>
+                    <!-- Text Content -->
+                    <div class="md:w-1/2 text-right md:pl-8">
+                        <h3 class="text-lg font-semibold mb-4">Increase Efficiency</h3>
+                        <p class="text-gray-700">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ultricies turpis vel lacus tristique, sit amet blandit urna consequat.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inner Div 3: Better Interaction with Patient -->
+            <div class="w-full md:w-1/2 px-4 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col md:flex-row items-center">
+                    <!-- Text Content -->
+                    <div class="md:w-1/2 text-left">
+                        <h3 class="text-lg font-semibold mb-4">Better Interaction with Patient</h3>
+                        <p class="text-gray-700">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ultricies turpis vel lacus tristique, sit amet blandit urna consequat.</p>
+                    </div>
+                    <!-- Image -->
+                    <div class="md:w-1/2 mt-4 md:mt-0">
+                        <img src="interaction_image.jpg" alt="Better Interaction with Patient Image" class="w-full h-auto rounded-lg shadow-lg">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Fifth Content Section: Customer Reviews -->
+<section class="py-20 md:py-32 bg-gray-300">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-semibold mb-8">Customer Reviews</h2>
+        <div class="flex flex-wrap -mx-4 mb-8">
+            <!-- Customer Feedback 1 -->
+            <div class="w-full md:w-1/2 px-4 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold mb-4">Customer Feedback 1</h3>
+                    <p class="text-gray-700">"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ultricies turpis vel lacus tristique, sit amet blandit urna consequat."</p>
+                </div>
+            </div>
+
+            <!-- Customer Feedback 2 -->
+            <div class="w-full md:w-1/2 px-4 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold mb-4">Customer Feedback 2</h3>
+                    <p class="text-gray-700">"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ultricies turpis vel lacus tristique, sit amet blandit urna consequat."</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Feedback Input -->
+        <div class="max-w-lg mx-auto">
+            <form>
+                <label for="feedback" class="block text-lg font-semibold mb-2">Your Feedback</label>
+                <textarea id="feedback" name="feedback" rows="4" class="w-full px-4 py-2 rounded-lg shadow-md focus:outline-none focus:ring focus:ring-blue-400" placeholder="Write your feedback here..."></textarea>
+                <button type="submit" class="mt-4 bg-blue-400 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-full shadow-md transition duration-300">Submit Feedback</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Sixth Content Section: Blog -->
+<section class="py-20 md:py-32 bg-gray-300">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-semibold mb-8">Blog</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Blog Post 1 -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <img src="blog_post_image_1.jpg" alt="Blog Post 1 Image" class="w-full h-48 object-cover object-center">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold mb-2">Blog Post Title 1</h3>
+                    <p class="text-gray-700">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ultricies turpis vel lacus tristique, sit amet blandit urna consequat.</p>
+                    <a href="#" class="mt-4 inline-block bg-blue-400 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-full transition duration-300">Read More</a>
+                </div>
+            </div>
+
+            <!-- Blog Post 2 -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <img src="blog_post_image_2.jpg" alt="Blog Post 2 Image" class="w-full h-48 object-cover object-center">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold mb-2">Blog Post Title 2</h3>
+                    <p class="text-gray-700">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ultricies turpis vel lacus tristique, sit amet blandit urna consequat.</p>
+                    <a href="#" class="mt-4 inline-block bg-blue-400 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-full transition duration-300">Read More</a>
+                </div>
+            </div>
+
+            <!-- Blog Post 3 -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <img src="blog_post_image_3.jpg" alt="Blog Post 3 Image" class="w-full h-48 object-cover object-center">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold mb-2">Blog Post Title 3</h3>
+                    <p class="text-gray-700">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ultricies turpis vel lacus tristique, sit amet blandit urna consequat.</p>
+                    <a href="#" class="mt-4 inline-block bg-blue-400 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-full transition duration-300">Read More</a>
+                </div>
+            </div>
+
+            <!-- Blog Post 4 -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <img src="blog_post_image_4.jpg" alt="Blog Post 4 Image" class="w-full h-48 object-cover object-center">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold mb-2">Blog Post Title 4</h3>
+                    <p class="text-gray-700">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ultricies turpis vel lacus tristique, sit amet blandit urna consequat.</p>
+                    <a href="#" class="mt-4 inline-block bg-blue-400 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-full transition duration-300">Read More</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+    <!-- forth Content Section -->
+    <section class="bg-gray-300 text-white py-20 md:py-32">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center">
+            <!-- Text Content -->
+            <div class="md:w-1/2 text-center md:text-left mb-8 md:mb-0 md:pr-8">
+                <h2 class=" text-gray-800 text-4xl md:text-5xl font-bold leading-tight">Subscribe for Updates</h2>
+                <p class="text-gray-800 mt-4 text-lg">
+                    Stay up-to-date with the latest news and updates on our AI bot. Enter your email address below.
+                </p>
+                <!-- Email Subscription Form -->
+                <form class="mt-8 flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                    <input type="email" placeholder="Enter your email address"
+                        class="w-full md:w-72 px-4 py-3 rounded-lg shadow-lg bg-gray-900 text-white placeholder-gray-400 focus:outline-none">
+                    <button type="submit"
+                        class="bg-a5a3c8 text-white font-bold py-3 px-6 rounded-full shadow-lg animated-btn hover:bg-565656">Subscribe</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto flex justify-center items-center">
+            <!-- Website Logo -->
+            <img src="assests/medibot  logo svg .png" alt="Website Logo" class="h-12 mr-4">
+            <p class="text-gray-300">© 2024 Medibot. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+
+</html>
