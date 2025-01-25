@@ -168,7 +168,7 @@ export function TrendChart({ selectedMetric }: TrendChartProps) {
                   borderRadius: '8px'
                 }}
                 formatter={(value: any, name: string) => {
-                  const unit = chartData[0]?.[`${name}_unit`] || ''
+                  const unit = (chartData[0] as any)?.[`${name}_unit`] || ''
                   return [`${value} ${unit}`, name]
                 }}
               />
