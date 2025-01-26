@@ -207,20 +207,20 @@ export function TrendChart({ selectedMetric }: TrendChartProps) {
               <div>
                 <span className="text-gray-500">First Reading:</span>
                 <p className="font-semibold">
-                  {chartData[0]?.[activeMetric]} {chartData[0]?.[`${activeMetric}_unit`]}
+                  {(chartData[0] as any)?.[activeMetric]} {(chartData[0] as any)?.[`${activeMetric}_unit`]}
                 </p>
               </div>
               <div>
                 <span className="text-gray-500">Latest Reading:</span>
                 <p className="font-semibold">
-                  {chartData[chartData.length - 1]?.[activeMetric]} {chartData[chartData.length - 1]?.[`${activeMetric}_unit`]}
+                  {(chartData[chartData.length - 1] as any)?.[activeMetric]} {(chartData[chartData.length - 1] as any)?.[`${activeMetric}_unit`]}
                 </p>
               </div>
               <div>
                 <span className="text-gray-500">Change:</span>
                 {(() => {
-                  const first = chartData[0]?.[activeMetric]
-                  const last = chartData[chartData.length - 1]?.[activeMetric]
+                  const first = (chartData[0] as any)?.[activeMetric]
+                  const last = (chartData[chartData.length - 1] as any)?.[activeMetric]
                   if (first && last) {
                     const change = ((last - first) / first * 100).toFixed(1)
                     const isPositive = parseFloat(change) > 0
