@@ -306,7 +306,7 @@ export async function reportRoutes(fastify: FastifyInstance) {
         const fallback = generateFallbackResponse(report, question)
         result = fallback.data
       } else {
-        const json = await response.json()
+        const json = (await response.json()) as any
         result = json.data || json
       }
 
