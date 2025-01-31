@@ -6,10 +6,16 @@ import { createClient } from '@supabase/supabase-js'
 const PYTHON_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000'
 
 // Supabase admin client to get user email
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-)
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.warn('⚠️ Supabase credentials not configured. Report worker will not function.')
+}
+
+const supabaseAdmin = supabaseUrl && supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : null
 
 const connection = {
   host: process.env.REDIS_HOST || '127.0.0.1', // Use explicit IPv4 to avoid ::1 issues
@@ -144,8 +150,11 @@ export const initReportWorker = () => {
         const reportTitle = report?.title || 'Health Report'
         
         // Get user email from Supabase Auth
-        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId)
-        const userEmail = userData?.user?.email
+        let userEmail: string | undefined
+        if (supabaseAdmin) {
+          const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId)
+          userEmail = userData?.user?.email
+        }
         
         const fullReportUrl = `${process.env.APP_URL || 'http://localhost:3000'}/reports/${reportId}`
         const reportUrl = `/reports/${reportId}`
