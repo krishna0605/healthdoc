@@ -16,6 +16,7 @@ RUN pip install poetry
 
 # Copy project files (from root context)
 COPY apps/ai-service/pyproject.toml apps/ai-service/poetry.lock* ./
+COPY apps/ai-service/README.md ./
 
 # Configure poetry to not create a virtualenv (easier for docker)
 RUN poetry config virtualenvs.create false
@@ -25,7 +26,6 @@ RUN poetry install --no-interaction --no-ansi
 
 # Copy app code (from root context)
 COPY apps/ai-service/app ./app/
-COPY apps/ai-service/README.md ./
 
 # Expose port (railway usually sets PORT env var)
 EXPOSE 8000
