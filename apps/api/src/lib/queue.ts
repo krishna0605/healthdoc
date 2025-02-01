@@ -2,7 +2,8 @@ import { Queue } from 'bullmq'
 
 const connection = {
   host: process.env.REDIS_HOST || '127.0.0.1', // Use explicit IPv4 to avoid ::1 issues
-  port: parseInt(process.env.REDIS_PORT || '6379')
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: process.env.REDIS_PASSWORD || undefined
 }
 
 let reportQueue: Queue | null = null
