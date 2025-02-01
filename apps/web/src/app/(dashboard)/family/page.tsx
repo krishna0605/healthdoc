@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { 
   useFamilyMembers, 
@@ -35,10 +35,14 @@ export default function FamilyPage() {
     gender: 'male',
     avatarColor: '#2e7c9e'
   });
+  
+  // Prevent infinite init loop
+  const hasInitialized = useRef(false);
 
-  // Auto-init family profile on mount if none exist
+  // Auto-init family profile on mount if none exist (only once)
   useEffect(() => {
-    if (!loading && members.length === 0) {
+    if (!loading && members.length === 0 && !hasInitialized.current) {
+      hasInitialized.current = true;
       initFamilyProfile().then(() => refetch());
     }
   }, [loading, members.length, refetch]);
