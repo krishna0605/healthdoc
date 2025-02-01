@@ -21,8 +21,8 @@ COPY apps/ai-service/README.md ./
 # Configure poetry to not create a virtualenv (easier for docker)
 RUN poetry config virtualenvs.create false
 
-# Install dependencies (--no-root skips installing the current project)
-RUN poetry install --no-interaction --no-ansi --no-root
+# Install only production dependencies (skips dev tools like black, pytest, etc.)
+RUN poetry install --no-interaction --no-ansi --no-root --only main
 
 # Copy app code (from root context)
 COPY apps/ai-service/app ./app/
