@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Info, Plus, FileText, Trash2, CheckCircle, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
@@ -33,11 +33,15 @@ export default function ReportsPage() {
   const [reportTitle, setReportTitle] = useState('');
   const [reportDate, setReportDate] = useState('');
 
+  // Prevent infinite init loop
+  const hasInitialized = useRef(false);
+
   const supabase = createClient();
 
-  // Auto-init family profile and select default
+  // Auto-init family profile and select default (only once)
   useEffect(() => {
-    if (!membersLoading && members.length === 0) {
+    if (!membersLoading && members.length === 0 && !hasInitialized.current) {
+      hasInitialized.current = true;
       initFamilyProfile().then(() => refetch());
     } else if (members.length > 0 && !selectedPatient) {
       const defaultMember = members.find(m => m.isDefault) || members[0];
