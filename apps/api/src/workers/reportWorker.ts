@@ -40,7 +40,11 @@ export const initReportWorker = () => {
       // 2. Call Python AI Service
       // We pass the signed URL or direct path?
       // Python service has Supabase Service Key, so it can download using filePath.
-      const response = await fetch(`${PYTHON_SERVICE_URL}/api/analyze`, {
+      // Note: FastAPI router expects trailing slash /api/analyze/
+      const analyzeUrl = `${PYTHON_SERVICE_URL}/api/analyze/`
+      console.log(`[Worker] Calling AI Service at: ${analyzeUrl}`)
+      
+      const response = await fetch(analyzeUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -51,6 +55,8 @@ export const initReportWorker = () => {
       })
 
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`[Worker] AI Service error: ${response.status} ${response.statusText}`, errorText)
         throw new Error(`AI Service failed: ${response.statusText}`)
       }
 
