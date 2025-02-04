@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { usePreferences } from '@/hooks/useNotifications';
 import { useAuth } from '@/hooks/useAuth';
+import { useTwoFactor, SetupData } from '@/hooks/useTwoFactor';
+import { QRCodeSVG } from 'qrcode.react';
+import { Copy, Check, Eye, EyeOff, RefreshCw, AlertTriangle } from 'lucide-react';
 
 // Toggle Row Component
 const ToggleRow = ({ label, desc, isOn, onToggle, loading }: { label: string; desc: string; isOn: boolean; onToggle: () => void; loading?: boolean }) => (
@@ -51,9 +54,18 @@ const LogEntry = ({ icon, iconColor, action, device, ip, time }: { icon: string;
 export default function SettingsPage() {
   const { user } = useAuth();
   const { preferences, loading: prefsLoading, updatePreferences } = usePreferences();
+  const { status: twoFactorStatus, setup2FA, verify2FA, disable2FA, loading: twoFactorLoading, error: twoFactorError } = useTwoFactor();
+  
   const [activeTab, setActiveTab] = useState('security');
   const [saving, setSaving] = useState(false);
-  const [show2FAInput, setShow2FAInput] = useState(false);
+  
+  // 2FA State
+  const [isSettingUp2FA, setIsSettingUp2FA] = useState(false);
+  const [setupData, setSetupData] = useState<SetupData | null>(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
+  const [copiedSecret, setCopiedSecret] = useState(false);
+  const [copiedBackup, setCopiedBackup] = useState(false);
 
   // Local state for toggles (synced with API)
   const [toggles, setToggles] = useState({
@@ -81,6 +93,48 @@ export default function SettingsPage() {
     setSaving(true);
     await updatePreferences({ [key]: newValue });
     setSaving(false);
+  };
+
+  const handleStart2FASetup = async () => {
+    setIsSettingUp2FA(true);
+    const data = await setup2FA();
+    if (data) {
+      setSetupData(data);
+    } else {
+      setIsSettingUp2FA(false); // Reset on error
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    if (verificationCode.length !== 6) return;
+    
+    const success = await verify2FA(verificationCode);
+    if (success && setupData) {
+      setBackupCodes(setupData.backupCodes);
+      setIsSettingUp2FA(false);
+      setSetupData(null);
+      setVerificationCode('');
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    // For simplicity, we'll ask for code confirmation in a real app
+    // Here we'll just disable if they confirm the dialog
+    if (window.confirm('Are you sure you want to disable 2FA? This will reduce your account security.')) {
+        // In a real flow, prompt for TOTP code first. 
+        // For this demo, we assume the user is authenticated in the session.
+        // NOTE: The disable2FA hook expects a code, so we might need a prompt.
+        const code = prompt('Please enter your 2FA code to confirm disabling:');
+        if (code) {
+           await disable2FA(code);
+        }
+    }
+  };
+
+  const copyToClipboard = (text: string, setCopied: (val: boolean) => void) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -153,10 +207,14 @@ export default function SettingsPage() {
                 <h3 className="text-lg md:text-xl font-bold mb-2 dark:text-white">Two-Factor Authentication</h3>
                 <p className="text-text-muted dark:text-gray-400 text-xs md:text-sm">Add an extra layer of security to your health data.</p>
               </div>
-              <span className="px-2 md:px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-[10px] md:text-xs font-bold rounded-lg uppercase tracking-wider">Disabled</span>
+              <span className={`px-2 md:px-3 py-1 font-bold rounded-lg uppercase tracking-wider text-[10px] md:text-xs ${twoFactorStatus.isEnabled ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'}`}>
+                 {twoFactorStatus.isEnabled ? 'Enabled' : 'Disabled'}
+              </span>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-3xl p-5 md:p-8 flex flex-col lg:flex-row gap-8 lg:gap-12 items-center">
+            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-3xl p-5 md:p-8 flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+              
+              {/* Left Side: Instructions / Status */}
               <div className="flex-1 w-full">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="size-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-primary flex items-center justify-center shrink-0">
@@ -168,45 +226,111 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 
-                <button 
-                  onClick={() => setShow2FAInput(true)}
-                  className="w-full bg-primary hover:bg-primary/90 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 text-sm md:text-base"
-                >
-                  Setup 2FA
-                </button>
+                {!twoFactorStatus.isEnabled ? (
+                  !isSettingUp2FA ? (
+                     <button 
+                       onClick={handleStart2FASetup}
+                       disabled={twoFactorLoading}
+                       className="w-full bg-primary hover:bg-primary/90 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 text-sm md:text-base flex items-center justify-center gap-2"
+                     >
+                       {twoFactorLoading ? 'Loading...' : 'Setup 2FA'}
+                     </button>
+                  ) : (
+                    <div className="space-y-4">
+                        <p className="text-sm text-text-muted">1. Scan the QR code with your authenticator app.</p>
+                        <p className="text-sm text-text-muted">2. Enter the 6-digit code below to verify.</p>
+                        <input 
+                            type="text" 
+                            maxLength={6}
+                            placeholder="000000"
+                            value={verificationCode}
+                            onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                            className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono text-center text-lg tracking-widest outline-none dark:text-white"
+                        />
+                         <div className="flex gap-2">
+                           <button onClick={() => { setIsSettingUp2FA(false); setSetupData(null); }} className="flex-1 py-3 text-sm font-bold text-text-muted hover:text-text-main bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">Cancel</button>
+                           <button 
+                             onClick={handleVerify2FA} 
+                             disabled={verificationCode.length !== 6 || twoFactorLoading}
+                             className="flex-1 py-3 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                           >
+                              {twoFactorLoading ? 'Verifying...' : 'Verify'}
+                           </button>
+                         </div>
+                         {twoFactorError && <p className="text-xs text-red-500 font-bold text-center">{twoFactorError}</p>}
+                    </div>
+                  )
+                ) : (
+                    <button 
+                       onClick={handleDisable2FA}
+                       className="w-full bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 py-3.5 rounded-xl font-bold transition-all text-sm md:text-base"
+                    >
+                       Disable 2FA
+                    </button>
+                )}
               </div>
 
-              {/* Visual Mock of 2FA Process */}
-              <div className="flex-1 w-full max-w-md border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-3xl p-6 flex flex-col items-center justify-center text-center">
-                {!show2FAInput ? (
+              {/* Right Side: QR Code / Backup Codes */}
+              <div className="flex-1 w-full max-w-md border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-3xl p-6 flex flex-col items-center justify-center text-center min-h-[250px] relative bg-white dark:bg-gray-800">
+                {twoFactorStatus.isEnabled && !backupCodes ? (
+                    <div className="flex flex-col items-center">
+                        <div className="size-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+                            <Check className="size-8" />
+                        </div>
+                        <h4 className="text-lg font-bold dark:text-white mb-2">2FA is complete</h4>
+                        <p className="text-sm text-text-muted">Your account is secured with two-factor authentication.</p>
+                    </div>
+                ) : backupCodes ? (
+                    <div className="w-full animate-in fade-in zoom-in duration-300">
+                         <h4 className="text-lg font-bold dark:text-white mb-2 text-red-500 flex items-center justify-center gap-2">
+                            <AlertTriangle className="size-5" />
+                            Save these backup codes!
+                         </h4>
+                         <p className="text-xs text-text-muted mb-4">If you lose access to your device, these will be the only way to access your account.</p>
+                         <div className="grid grid-cols-2 gap-2 mb-4 bg-gray-50 dark:bg-gray-900 p-3 rounded-xl">
+                            {backupCodes.map((code, i) => (
+                                <code key={i} className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-700">{code}</code>
+                            ))}
+                         </div>
+                         <button 
+                            onClick={() => copyToClipboard(backupCodes.join('\n'), setCopiedBackup)}
+                            className="flex items-center justify-center gap-2 text-xs font-bold text-primary hover:underline w-full"
+                         >
+                            {copiedBackup ? <Check className="size-3" /> : <Copy className="size-3" />}
+                            {copiedBackup ? 'Copied!' : 'Copy to clipboard'}
+                         </button>
+                         <button onClick={() => setBackupCodes(null)} className="mt-4 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 underline">Done</button>
+                    </div>
+                ) : isSettingUp2FA && setupData ? (
+                  <div className="w-full animate-in fade-in duration-300 flex flex-col items-center">
+                    <div className="bg-white p-2 rounded-xl shadow-sm mb-4">
+                        <QRCodeSVG value={setupData.qrCodeUrl} size={160} level="M" />
+                    </div>
+                    <div className="w-full bg-gray-50 dark:bg-gray-900 p-3 rounded-xl flex items-center justify-between gap-2 border border-gray-100 dark:border-gray-700">
+                        <code className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate max-w-[200px]">{setupData.secret}</code>
+                        <button 
+                            onClick={() => copyToClipboard(setupData.secret, setCopiedSecret)}
+                            className="text-gray-400 hover:text-primary transition-colors p-1"
+                            title="Copy Secret"
+                        >
+                            {copiedSecret ? <Check className="size-4" /> : <Copy className="size-4" />}
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-2">Can't scan? Enter this code manually.</p>
+                  </div>
+                ) : (
                   <>
-                    <div className="size-24 md:size-32 bg-white dark:bg-gray-800 rounded-xl mb-4 flex items-center justify-center shadow-sm">
+                    <div className="size-24 md:size-32 bg-gray-50 dark:bg-gray-900/50 rounded-xl mb-4 flex items-center justify-center shadow-inner">
                       <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest px-4 text-center">Setup Required</p>
                     </div>
-                    <div className="h-10 md:h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse opacity-50"></div>
-                    <p className="text-[10px] text-gray-400 mt-3">Security flow will appear here after initiation.</p>
+                    <p className="text-[10px] text-gray-400">Security flow will appear here after initiation.</p>
                   </>
-                ) : (
-                  <div className="w-full animate-in fade-in duration-300">
-                    <p className="text-sm font-bold text-text-main dark:text-white mb-4">Enter the code from your app:</p>
-                    <div className="flex justify-center gap-2 mb-4">
-                      {[...Array(6)].map((_, i) => (
-                        <div key={i} className="size-8 md:size-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center font-mono text-lg font-bold">
-                          {i === 0 ? <span className="animate-pulse">|</span> : ''}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => setShow2FAInput(false)} className="flex-1 py-2 text-xs font-bold text-text-muted hover:text-text-main">Cancel</button>
-                      <button className="flex-1 py-2 bg-text-main dark:bg-white text-white dark:text-text-main rounded-lg text-xs font-bold">Verify</button>
-                    </div>
-                  </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Activity Log */}
+          {/* Activity Log - Unchanged */}
           <div className="bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <div className="p-5 md:p-8 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
