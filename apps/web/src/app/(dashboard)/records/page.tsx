@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Upload, FileText, ChevronRight, CheckCircle, AlertTriangle, Clock, ArrowRight, Filter } from 'lucide-react';
+import { Search, Upload, FileText, ChevronRight, CheckCircle, AlertTriangle, Clock, ArrowRight, Filter, User } from 'lucide-react';
 import { useReports, Report } from '@/hooks/useReports';
 
 // Status badge component
@@ -47,10 +47,28 @@ export default function RecordsPage() {
 
   // Filter reports based on search and category
   const filteredReports = reports.filter(report => {
+    // Search Filter
     const matchesSearch = report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           report.originalFileName.toLowerCase().includes(searchQuery.toLowerCase());
-    // For now, category filtering is placeholder since we don't have category data
-    return matchesSearch;
+    
+    if (!matchesSearch) return false;
+
+    // Category Filter
+    switch (activeCategory) {
+      case 'Lab Results':
+        return report.fileType === 'PDF' || report.fileType === 'TEXT';
+      case 'Imaging':
+        return report.fileType === 'IMAGE';
+      case 'Prescriptions':
+        const titleLower = report.title.toLowerCase();
+        return titleLower.includes('prescription') || titleLower.includes('rx') || titleLower.includes('medication');
+      case 'Vaccinations':
+        const vacLower = report.title.toLowerCase();
+        return vacLower.includes('vaccine') || vacLower.includes('immunization') || vacLower.includes('shot') || vacLower.includes('vax');
+      case 'All':
+      default:
+        return true;
+    }
   });
 
   const formatDate = (dateString: string) => {
@@ -136,7 +154,11 @@ export default function RecordsPage() {
             <FileText className="size-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
             <h3 className="text-xl font-bold mb-2 dark:text-white">No records found</h3>
             <p className="text-text-muted dark:text-gray-400 mb-6">
-              {searchQuery ? 'Try a different search term.' : 'Upload your first medical report to get started.'}
+              {searchQuery 
+                ? 'Try a different search term.' 
+                : activeCategory !== 'All' 
+                ? `No ${activeCategory.toLowerCase()} found.`
+                : 'Upload your first medical report to get started.'}
             </p>
             <Link 
               href="/reports"
@@ -156,7 +178,11 @@ export default function RecordsPage() {
               >
                 {/* Icon */}
                 <div className="size-12 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary shrink-0">
-                  <FileText className="size-6" />
+                  {report.fileType === 'IMAGE' ? (
+                     <span className="material-symbols-outlined">image</span>
+                  ) : (
+                     <FileText className="size-6" />
+                  )}
                 </div>
 
                 {/* Content */}
@@ -164,10 +190,37 @@ export default function RecordsPage() {
                   <h3 className="font-bold text-text-main dark:text-white group-hover:text-primary transition-colors truncate">
                     {report.title}
                   </h3>
-                  <p className="text-sm text-text-muted dark:text-gray-400">
-                    Analyzed {formatDate(report.createdAt)} • {report.fileType === 'PDF' ? 'Lab Results' : 'Imaging'}
-                  </p>
+                  <div className="flex items-center gap-2 text-sm text-text-muted dark:text-gray-400 mt-1">
+                    <span>Analyzed {formatDate(report.createdAt)}</span>
+                    <span>•</span>
+                    <span className="capitalize">{report.fileType.toLowerCase()}</span>
+                  </div>
                 </div>
+
+                {/* Family Profile Avatar */}
+                {report.familyMember && (
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                    <div 
+                      className="size-6 rounded-full flex items-center justify-center text-[10px] text-white font-bold"
+                      style={{ backgroundColor: report.familyMember.avatarColor || '#3B82F6' }}
+                    >
+                      {report.familyMember.name.charAt(0)}
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300 max-w-[100px] truncate">
+                      {report.familyMember.name}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Fallback if no family member (e.g. self or older data) */}
+                {!report.familyMember && (
+                   <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 opacity-60">
+                     <div className="size-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                        <User className="size-3 text-white" />
+                     </div>
+                     <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Self</span>
+                   </div>
+                )}
 
                 {/* Status */}
                 <StatusBadge status={report.status} />

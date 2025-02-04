@@ -10,7 +10,7 @@ interface EmailOptions {
 }
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
-const FROM_EMAIL = process.env.FROM_EMAIL || 'HealthDoc <notifications@healthdoc.app>'
+const FROM_EMAIL = process.env.FROM_EMAIL || 'HealthDoc <onboarding@resend.dev>'
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // If no API key, log and skip (development mode)
