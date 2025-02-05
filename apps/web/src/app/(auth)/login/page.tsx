@@ -51,13 +51,21 @@ function LoginForm() {
   }
 
   const handleOAuthLogin = async (provider: 'google' | 'github') => {
-    const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${redirectTo}`,
-      },
-    })
+    try {
+      setIsLoading(true)
+      setError(null)
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${redirectTo}`,
+        },
+      })
+      if (error) throw error
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to connect to provider')
+      setIsLoading(false)
+    }
   }
 
   return (
