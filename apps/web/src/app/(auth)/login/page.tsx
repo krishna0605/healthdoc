@@ -20,7 +20,7 @@ const Logo = () => (
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const
+
   const redirectTo = searchParams.get('redirectTo') || '/dashboard'
   const { user, isLoading: isAuthLoading } = useAuth()
 
