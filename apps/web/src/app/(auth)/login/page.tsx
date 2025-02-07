@@ -20,9 +20,16 @@ const Logo = () => (
 
 function LoginForm() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-
-  const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+  // const searchParams = useSearchParams() // Causing Error #310
+  const [redirectTo, setRedirectTo] = useState('/dashboard')
+  
+  useEffect(() => {
+    // Client-side only params reading to avoid Suspense issues
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      setRedirectTo(params.get('redirectTo') || '/dashboard')
+    }
+  }, [])
   const { user, isLoading: isAuthLoading } = useAuth()
 
   useEffect(() => {
