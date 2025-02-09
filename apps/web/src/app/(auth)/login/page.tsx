@@ -11,7 +11,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useAuth } from '@/hooks/useAuth'
 
 // import { ThemeToggle } from '@/components/ui/ThemeToggle'
-// import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/hooks/useAuth'
 
 // ... existing imports ...
 
@@ -38,22 +38,22 @@ function LoginForm() {
       setRedirectTo(params.get('redirectTo') || '/dashboard')
     }
   }, [])
-  // const { user, isLoading: isAuthLoading } = useAuth()
+  const { user, isLoading: isAuthLoading } = useAuth()
 
-  // useEffect(() => {
-  //   if (user) {
-  //     router.push(redirectTo)
-  //   }
-  // }, [user, router, redirectTo])
+  useEffect(() => {
+    if (user) {
+      router.push(redirectTo)
+    }
+  }, [user, router, redirectTo])
 
-  // if (isAuthLoading || user) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
-  //       <Loader2 className="h-8 w-8 animate-spin text-primary" />
-  //       <span className="ml-2 text-text-main dark:text-white font-medium">Redirecting...</span>
-  //     </div>
-  //   )
-  // }
+  if (isAuthLoading || user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-text-main dark:text-white font-medium">Redirecting...</span>
+      </div>
+    )
+  }
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
