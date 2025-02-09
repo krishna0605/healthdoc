@@ -7,13 +7,8 @@ import { Loader2 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/client'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
-import { useAuth } from '@/hooks/useAuth'
-
 // import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useAuth } from '@/hooks/useAuth'
-
-// ... existing imports ...
 
 // HealthDoc Logo SVG
 const Logo = () => (
