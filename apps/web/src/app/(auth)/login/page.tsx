@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/client'
-// import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useAuth } from '@/hooks/useAuth'
 
 // HealthDoc Logo SVG
@@ -100,7 +100,7 @@ function LoginForm() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background-light dark:bg-background-dark p-6 relative overflow-hidden transition-colors duration-300">
       
       <div className="absolute top-6 right-6 z-20">
-        {/* <ThemeToggle /> */}
+        <ThemeToggle />
       </div>
 
       {/* Background blobs */}
