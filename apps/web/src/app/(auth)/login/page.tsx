@@ -25,6 +25,13 @@ function LoginForm() {
   // const searchParams = useSearchParams() // Causing Error #310
   const [redirectTo, setRedirectTo] = useState('/dashboard')
   
+  /* Hook order fix: all hooks must be called before any conditional return */
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  /* Effects */
   useEffect(() => {
     // Client-side only params reading to avoid Suspense issues
     if (typeof window !== 'undefined') {
@@ -32,14 +39,14 @@ function LoginForm() {
       setRedirectTo(params.get('redirectTo') || '/dashboard')
     }
   }, [])
-  const { user, isLoading: isAuthLoading } = useAuth()
-
+  
   useEffect(() => {
     if (user) {
       router.push(redirectTo)
     }
   }, [user, router, redirectTo])
 
+  /* Conditional render happens AFTER all hooks */
   if (isAuthLoading || user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
@@ -48,11 +55,6 @@ function LoginForm() {
       </div>
     )
   }
-
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
