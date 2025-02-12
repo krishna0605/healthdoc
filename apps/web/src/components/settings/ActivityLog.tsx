@@ -53,8 +53,10 @@ const LogEntryRow = ({ log }: { log: LogEntry }) => {
   );
 };
 
+import { createClient } from '@/lib/supabase/client';
+
 export function ActivityLog() {
-  const { user, getToken } = useAuth();
+  const { user } = useAuth();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +64,10 @@ export function ActivityLog() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const token = await getToken();
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        
         if (!token) return;
 
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/audit?limit=20`, {
@@ -86,7 +91,7 @@ export function ActivityLog() {
     if (user) {
       fetchLogs();
     }
-  }, [user, getToken]);
+  }, [user]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
