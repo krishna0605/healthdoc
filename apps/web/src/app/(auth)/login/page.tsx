@@ -30,6 +30,7 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const { user, isLoading: isAuthLoading } = useAuth()
 
   /* Effects */
   useEffect(() => {
