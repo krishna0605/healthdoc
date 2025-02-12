@@ -2,6 +2,7 @@
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../lib/prisma.js'
 import { getUserFromToken } from '../../lib/supabase.js'
+import { logAuditEvent, AuditActions } from '../../lib/auditService.js'
 
 export async function userRoutes(fastify: FastifyInstance) {
   // Auth Middleware
@@ -64,6 +65,14 @@ export async function userRoutes(fastify: FastifyInstance) {
           emailOnAbnormal: emailOnAbnormal ?? true,
           weeklyDigest: weeklyDigest ?? false
         }
+      })
+
+      // Log Audit Event
+      await logAuditEvent({
+        userId: request.user.id,
+        action: AuditActions.NOTIFICATION_PREFS_UPDATE,
+        resource: 'preferences',
+        request
       })
 
       return { data: prefs }

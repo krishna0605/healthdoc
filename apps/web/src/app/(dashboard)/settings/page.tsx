@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTwoFactor, SetupData } from '@/hooks/useTwoFactor';
 import { QRCodeSVG } from 'qrcode.react';
 import { Copy, Check, Eye, EyeOff, RefreshCw, AlertTriangle } from 'lucide-react';
+import { ActivityLog } from '@/components/settings/ActivityLog';
 
 // Toggle Row Component
 const ToggleRow = ({ label, desc, isOn, onToggle, loading }: { label: string; desc: string; isOn: boolean; onToggle: () => void; loading?: boolean }) => (
@@ -330,67 +331,9 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Activity Log - Unchanged */}
-          <div className="bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-            <div className="p-5 md:p-8 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h3 className="text-lg md:text-xl font-bold mb-1 dark:text-white">Activity Log</h3>
-                <p className="text-text-muted dark:text-gray-400 text-xs md:text-sm">HIPAA-compliant audit trail of all account actions.</p>
-              </div>
-              <button className="text-primary font-bold text-xs md:text-sm hover:underline">Export CSV</button>
-            </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left min-w-[600px]">
-                <thead>
-                  <tr className="bg-gray-50/50 dark:bg-gray-700/20">
-                    <th className="py-4 px-6 md:px-8 text-[10px] font-bold text-text-muted uppercase tracking-widest">Action</th>
-                    <th className="py-4 px-6 md:px-8 text-[10px] font-bold text-text-muted uppercase tracking-widest">Device / Source</th>
-                    <th className="py-4 px-6 md:px-8 text-[10px] font-bold text-text-muted uppercase tracking-widest">IP Address</th>
-                    <th className="py-4 px-6 md:px-8 text-[10px] font-bold text-text-muted uppercase tracking-widest text-right">Timestamp</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm divide-y divide-gray-50 dark:divide-gray-700/50">
-                  <LogEntry 
-                    icon="upload_file" 
-                    iconColor="text-primary"
-                    action="Report Uploaded" 
-                    device="Chrome / macOS" 
-                    ip="192.168.1.104" 
-                    time="Oct 24, 2023 · 14:22" 
-                  />
-                  <LogEntry 
-                    icon="login" 
-                    iconColor="text-blue-500"
-                    action="System Login" 
-                    device="Safari / iPhone" 
-                    ip="172.56.21.89" 
-                    time="Oct 24, 2023 · 09:15" 
-                  />
-                  <LogEntry 
-                    icon="share" 
-                    iconColor="text-primary"
-                    action="Doctor Link Created" 
-                    device="Chrome / macOS" 
-                    ip="192.168.1.104" 
-                    time="Oct 22, 2023 · 16:45" 
-                  />
-                  <LogEntry 
-                    icon="lock_reset" 
-                    iconColor="text-text-main dark:text-gray-400"
-                    action="Password Changed" 
-                    device="Direct Request" 
-                    ip="192.168.1.104" 
-                    time="Oct 20, 2023 · 11:30" 
-                  />
-                </tbody>
-              </table>
-            </div>
-            
-            <div className="p-4 bg-gray-50 dark:bg-gray-900/30 text-center">
-              <button className="text-text-muted text-xs font-bold hover:text-primary transition-colors">View All Logs</button>
-            </div>
-          </div>
+          {/* Activity Log - Real Data */}
+          <ActivityLog />
         </div>
       </div>
     </>

@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../../lib/prisma.js'
 import { getUserFromToken } from '../../lib/supabase.js'
 import { createReportSchema, CreateReportInput } from './schema.js'
+import { logAuditEvent, AuditActions } from '../../lib/auditService.js'
 
 export async function reportRoutes(fastify: FastifyInstance) {
   // Authentication Middleware
@@ -87,6 +88,16 @@ export async function reportRoutes(fastify: FastifyInstance) {
         fileType: body.fileType,
         status: 'UPLOADED'
       }
+    })
+
+    // Log Audit Event
+    await logAuditEvent({
+      userId: user.id,
+      action: AuditActions.REPORT_UPLOAD,
+      resource: 'report',
+      resourceId: report.id,
+      metadata: { fileName: report.originalFileName },
+      request
     })
 
     // Trigger processing job (Queue)
@@ -202,6 +213,15 @@ export async function reportRoutes(fastify: FastifyInstance) {
     // Delete from DB (Cascade deletes analysis, metrics)
     await prisma.report.delete({
       where: { id }
+    })
+
+    // Log Audit Event
+    await logAuditEvent({
+        userId: user.id,
+        action: AuditActions.REPORT_DELETE,
+        resource: 'report',
+        resourceId: id,
+        request
     })
     
     // TODO: Delete from Storage?

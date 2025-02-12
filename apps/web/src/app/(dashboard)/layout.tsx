@@ -46,14 +46,14 @@ function DashboardLayoutInner({
             {/* Notification Bell */}
             <NotificationBell />
             
-            {/* User Avatar */}
-            <div 
-              className="size-10 rounded-full bg-blue-100 text-primary font-bold flex items-center justify-center text-sm border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform"
+            {/* Sign Out Button */}
+            <button 
+              className="flex items-center justify-center size-10 rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
               onClick={handleSignOut}
               title="Sign Out"
             >
-              {userInitials}
-            </div>
+              <span className="material-symbols-outlined text-xl">logout</span>
+            </button>
           </div>
         </header>
 

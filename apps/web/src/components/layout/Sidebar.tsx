@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
     className?: string;
@@ -39,6 +40,12 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, href, active = false })
 
 export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
   const pathname = usePathname();
+  const { user } = useAuth();
+  
+  // Get user initials for avatar
+  const userInitials = user?.user_metadata?.name 
+    ? user.user_metadata.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+    : user?.email?.[0].toUpperCase() || 'U';
   
   // Helper to determine if an item is active
   const isActive = (path: string) => {
@@ -72,9 +79,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
       {/* Desktop Theme Toggle & Avatar */}
       <div className="hidden md:flex mt-auto flex-col items-center gap-6 mb-8">
         <ThemeToggle />
-        <div className="cursor-pointer hover:scale-110 transition-transform">
-          <div className="size-10 rounded-full bg-gradient-to-tr from-green-300 to-primary shadow-lg shadow-primary/30"></div>
-        </div>
+
+        <Link href="/settings" className="cursor-pointer hover:scale-110 transition-transform" title="Profile & Settings">
+          <div className="size-10 rounded-full bg-gradient-to-tr from-green-300 to-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white font-bold text-sm">
+            {userInitials}
+          </div>
+        </Link>
       </div>
     </aside>
   );
