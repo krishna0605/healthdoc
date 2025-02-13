@@ -40,10 +40,15 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
   return (
     <button 
       onClick={toggleTheme}
-      className={`p-2.5 rounded-xl transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 text-text-muted hover:text-primary dark:text-gray-400 dark:hover:text-white ${className}`}
+      className={`relative p-2.5 rounded-xl transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-text-muted hover:text-primary dark:text-gray-400 dark:hover:text-white overflow-hidden group ${className}`}
       aria-label="Toggle Dark Mode"
     >
-      {isDark ? <Sun className="size-5" /> : <Moon className="size-5" />}
+      <div className={`transition-all duration-500 ease-in-out transform ${isDark ? 'rotate-90 opacity-0 absolute' : 'rotate-0 opacity-100'}`}>
+        <Moon className="size-5" />
+      </div>
+      <div className={`transition-all duration-500 ease-in-out transform ${isDark ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0 absolute'}`}>
+        <Sun className="size-5" />
+      </div>
     </button>
   );
 };

@@ -13,7 +13,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         className={cn(
           'rounded-2xl transition-all duration-300',
           {
-            'border border-gray-200 bg-white shadow-sm hover:shadow-md':
+            'border border-gray-200 bg-white shadow-sm hover:shadow-md hover:-translate-y-1':
               variant === 'default',
             'bg-white shadow-xl shadow-gray-200/50 hover:shadow-2xl hover:shadow-gray-300/50':
               variant === 'elevated',

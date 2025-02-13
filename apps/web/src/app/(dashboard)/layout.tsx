@@ -33,7 +33,7 @@ function DashboardLayoutInner({
       {/* Main Content */}
       <div className="flex-1 ml-0 md:ml-20 transition-all duration-300">
         {/* Top Header */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-40 px-6 lg:px-12 h-20 flex items-center justify-end">
+        <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-700 sticky top-0 z-40 px-6 lg:px-12 h-20 flex items-center justify-end">
           <div className="flex items-center gap-4">
             {/* Mobile Theme Toggle */}
             <div className="md:hidden">

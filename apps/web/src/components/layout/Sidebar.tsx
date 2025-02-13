@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
   };
 
   return (
-    <aside className={`fixed z-50 transition-all duration-300 bg-white dark:bg-gray-800 
+    <aside className={`fixed z-50 transition-all duration-300 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md 
         md:w-20 md:h-full md:left-0 md:top-0 md:border-r md:border-gray-100 md:dark:border-gray-700 md:flex-col md:py-8
         w-full h-auto bottom-0 left-0 border-t border-gray-100 dark:border-gray-700 flex flex-row justify-around py-2 px-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:shadow-none pb-[calc(0.5rem+env(safe-area-inset-bottom))]
         ${className}`}
