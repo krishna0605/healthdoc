@@ -8,6 +8,7 @@ import { useTwoFactor, SetupData } from '@/hooks/useTwoFactor';
 import { QRCodeSVG } from 'qrcode.react';
 import { Copy, Check, Eye, EyeOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import { ActivityLog } from '@/components/settings/ActivityLog';
+import { FadeIn } from '@/components/animations/FadeIn';
 
 // Toggle Row Component
 const ToggleRow = ({ label, desc, isOn, onToggle, loading }: { label: string; desc: string; isOn: boolean; onToggle: () => void; loading?: boolean }) => (
@@ -26,16 +27,7 @@ const ToggleRow = ({ label, desc, isOn, onToggle, loading }: { label: string; de
   </div>
 );
 
-// Nav Button Component
-const NavButton = ({ icon, label, active, onClick }: { icon: string; label: string; active: boolean; onClick: () => void }) => (
-  <button 
-    onClick={onClick}
-    className={`w-auto min-w-[120px] lg:w-full flex items-center justify-center lg:justify-start gap-2 lg:gap-4 px-4 lg:px-6 py-3 lg:py-4 rounded-xl transition-all duration-200 font-bold text-sm text-left whitespace-nowrap lg:whitespace-normal shrink-0 ${active ? 'bg-primary/10 text-primary' : 'text-text-muted hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-text-main dark:hover:text-white'}`}
-  >
-    <span className={`material-symbols-outlined ${active ? 'fill-1' : ''}`}>{icon}</span>
-    {label}
-  </button>
-);
+
 
 // Log Entry Component
 const LogEntry = ({ icon, iconColor, action, device, ip, time }: { icon: string; iconColor: string; action: string; device: string; ip: string; time: string }) => (
@@ -57,7 +49,6 @@ export default function SettingsPage() {
   const { preferences, loading: prefsLoading, updatePreferences } = usePreferences();
   const { status: twoFactorStatus, setup2FA, verify2FA, disable2FA, loading: twoFactorLoading, error: twoFactorError } = useTwoFactor();
   
-  const [activeTab, setActiveTab] = useState('security');
   const [saving, setSaving] = useState(false);
   
   // 2FA State
@@ -139,12 +130,12 @@ export default function SettingsPage() {
   };
 
   return (
-    <>
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-12 gap-4">
+    <div className="max-w-4xl mx-auto w-full pb-20">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div className="w-full flex justify-between items-start md:block">
           <div>
             <h1 className="text-3xl md:text-4xl font-black mb-2 dark:text-white">Account Settings</h1>
-            <p className="text-text-muted dark:text-gray-400 text-sm md:text-lg">Manage your security preferences.</p>
+            <p className="text-text-muted dark:text-gray-400 text-sm md:text-lg">Manage your security preferences and notifications.</p>
           </div>
           <div className="md:hidden">
             <ThemeToggle />
@@ -157,185 +148,192 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <div className="grid lg:grid-cols-12 gap-6 md:gap-8 lg:gap-12">
-        {/* Sidebar Navigation */}
-        <div className="lg:col-span-3 space-y-2 overflow-x-auto flex lg:block gap-2 pb-2 lg:pb-0 no-scrollbar sticky top-0 bg-[#f8f9fa] dark:bg-background-dark z-20 -mx-4 md:mx-0 px-4 md:px-0">
-          <NavButton icon="shield_person" label="Security" active={activeTab === 'security'} onClick={() => setActiveTab('security')} />
-          <NavButton icon="notifications" label="Notifications" active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')} />
-          <NavButton icon="history" label="Activity" active={activeTab === 'activity'} onClick={() => setActiveTab('activity')} />
-          <NavButton icon="person" label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
-        </div>
-
-        {/* Main Content Area */}
-        <div className="lg:col-span-9 space-y-6 md:space-y-8">
+      <div className="space-y-8">
           
           {/* Notification Preferences */}
-          <div className="bg-white dark:bg-gray-800 rounded-[2rem] p-5 md:p-8 border border-gray-100 dark:border-gray-700 shadow-sm">
-            <h3 className="text-lg md:text-xl font-bold mb-2 dark:text-white">Notification Preferences</h3>
-            <p className="text-text-muted dark:text-gray-400 text-xs md:text-sm mb-6 md:mb-8">Control how and when you receive health analysis updates.</p>
+          <FadeIn delay={0.1}>
+            <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-6 md:p-10 border border-gray-100 dark:border-gray-700 shadow-sm transition-all hover:shadow-md">
+              <h3 className="text-xl font-bold mb-2 dark:text-white flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">notifications</span>
+                Notification Preferences
+              </h3>
+              <p className="text-text-muted dark:text-gray-400 text-sm mb-8">Control how and when you receive health analysis updates.</p>
 
-            <div className="space-y-6">
-              <ToggleRow 
-                label="Analysis Alerts" 
-                desc="Receive instant notifications when a new health report is ready." 
-                isOn={toggles.emailOnComplete} 
-                onToggle={() => handleToggle('emailOnComplete')}
-                loading={saving || prefsLoading}
-              />
-              <div className="h-px bg-gray-50 dark:bg-gray-700/50"></div>
-              <ToggleRow 
-                label="Abnormality Alerts" 
-                desc="Get notified when any abnormal values are detected in your reports." 
-                isOn={toggles.emailOnAbnormal} 
-                onToggle={() => handleToggle('emailOnAbnormal')}
-                loading={saving || prefsLoading}
-              />
-              <div className="h-px bg-gray-50 dark:bg-gray-700/50"></div>
-              <ToggleRow 
-                label="Weekly Digest" 
-                desc="A weekly summary of your health trends and upcoming screenings." 
-                isOn={toggles.weeklyDigest} 
-                onToggle={() => handleToggle('weeklyDigest')}
-                loading={saving || prefsLoading}
-              />
-            </div>
-          </div>
+              <div className="space-y-6">
+                <ToggleRow 
+                  label="Analysis Alerts" 
+                  desc="Receive instant notifications when a new health report is ready." 
+                  isOn={toggles.emailOnComplete} 
+                  onToggle={() => handleToggle('emailOnComplete')}
+                  loading={saving || prefsLoading}
+                />
+                <div className="h-px bg-gray-50 dark:bg-gray-700/50"></div>
+                <ToggleRow 
+                  label="Abnormality Alerts" 
+                  desc="Get notified when any abnormal values are detected in your reports." 
+                  isOn={toggles.emailOnAbnormal} 
+                  onToggle={() => handleToggle('emailOnAbnormal')}
+                  loading={saving || prefsLoading}
+                />
+                <div className="h-px bg-gray-50 dark:bg-gray-700/50"></div>
+                <ToggleRow 
+                  label="Weekly Digest" 
+                  desc="A weekly summary of your health trends and upcoming screenings." 
+                  isOn={toggles.weeklyDigest} 
+                  onToggle={() => handleToggle('weeklyDigest')}
+                  loading={saving || prefsLoading}
+                />
+              </div>
+            </section>
+          </FadeIn>
 
           {/* 2FA Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-[2rem] p-5 md:p-8 border border-gray-100 dark:border-gray-700 shadow-sm">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h3 className="text-lg md:text-xl font-bold mb-2 dark:text-white">Two-Factor Authentication</h3>
-                <p className="text-text-muted dark:text-gray-400 text-xs md:text-sm">Add an extra layer of security to your health data.</p>
-              </div>
-              <span className={`px-2 md:px-3 py-1 font-bold rounded-lg uppercase tracking-wider text-[10px] md:text-xs ${twoFactorStatus.isEnabled ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'}`}>
-                 {twoFactorStatus.isEnabled ? 'Enabled' : 'Disabled'}
-              </span>
-            </div>
-
-            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-3xl p-5 md:p-8 flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-              
-              {/* Left Side: Instructions / Status */}
-              <div className="flex-1 w-full">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="size-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-primary flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined">perm_device_information</span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold dark:text-white text-sm md:text-base">Authenticator App</h4>
-                    <p className="text-xs text-text-muted max-w-xs mt-1">Use apps like Google Authenticator or Authy to generate secure, one-time codes.</p>
-                  </div>
+          <FadeIn delay={0.2}>
+            <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-6 md:p-10 border border-gray-100 dark:border-gray-700 shadow-sm transition-all hover:shadow-md">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-xl font-bold mb-2 dark:text-white flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">shield_person</span>
+                    Two-Factor Authentication
+                  </h3>
+                  <p className="text-text-muted dark:text-gray-400 text-sm">Add an extra layer of security to your health data.</p>
                 </div>
+                <span className={`px-3 py-1 font-bold rounded-lg uppercase tracking-wider text-xs ${twoFactorStatus.isEnabled ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'}`}>
+                   {twoFactorStatus.isEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-3xl p-6 md:p-8 flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
                 
-                {!twoFactorStatus.isEnabled ? (
-                  !isSettingUp2FA ? (
-                     <button 
-                       onClick={handleStart2FASetup}
-                       disabled={twoFactorLoading}
-                       className="w-full bg-primary hover:bg-primary/90 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 text-sm md:text-base flex items-center justify-center gap-2"
-                     >
-                       {twoFactorLoading ? 'Loading...' : 'Setup 2FA'}
-                     </button>
-                  ) : (
-                    <div className="space-y-4">
-                        <p className="text-sm text-text-muted">1. Scan the QR code with your authenticator app.</p>
-                        <p className="text-sm text-text-muted">2. Enter the 6-digit code below to verify.</p>
-                        <input 
-                            type="text" 
-                            maxLength={6}
-                            placeholder="000000"
-                            value={verificationCode}
-                            onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                            className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono text-center text-lg tracking-widest outline-none dark:text-white"
-                        />
-                         <div className="flex gap-2">
-                           <button onClick={() => { setIsSettingUp2FA(false); setSetupData(null); }} className="flex-1 py-3 text-sm font-bold text-text-muted hover:text-text-main bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">Cancel</button>
-                           <button 
-                             onClick={handleVerify2FA} 
-                             disabled={verificationCode.length !== 6 || twoFactorLoading}
-                             className="flex-1 py-3 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                           >
-                              {twoFactorLoading ? 'Verifying...' : 'Verify'}
-                           </button>
-                         </div>
-                         {twoFactorError && <p className="text-xs text-red-500 font-bold text-center">{twoFactorError}</p>}
+                {/* Left Side: Instructions / Status */}
+                <div className="flex-1 w-full">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="size-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-primary flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined">perm_device_information</span>
                     </div>
-                  )
-                ) : (
-                    <button 
-                       onClick={handleDisable2FA}
-                       className="w-full bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 py-3.5 rounded-xl font-bold transition-all text-sm md:text-base"
-                    >
-                       Disable 2FA
-                    </button>
-                )}
-              </div>
-
-              {/* Right Side: QR Code / Backup Codes */}
-              <div className="flex-1 w-full max-w-md border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-3xl p-6 flex flex-col items-center justify-center text-center min-h-[250px] relative bg-white dark:bg-gray-800">
-                {twoFactorStatus.isEnabled && !backupCodes ? (
-                    <div className="flex flex-col items-center">
-                        <div className="size-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
-                            <Check className="size-8" />
-                        </div>
-                        <h4 className="text-lg font-bold dark:text-white mb-2">2FA is complete</h4>
-                        <p className="text-sm text-text-muted">Your account is secured with two-factor authentication.</p>
+                    <div>
+                      <h4 className="font-bold dark:text-white text-base">Authenticator App</h4>
+                      <p className="text-xs text-text-muted max-w-xs mt-1">Use apps like Google Authenticator or Authy to generate secure, one-time codes.</p>
                     </div>
-                ) : backupCodes ? (
-                    <div className="w-full animate-in fade-in zoom-in duration-300">
-                         <h4 className="text-lg font-bold dark:text-white mb-2 text-red-500 flex items-center justify-center gap-2">
-                            <AlertTriangle className="size-5" />
-                            Save these backup codes!
-                         </h4>
-                         <p className="text-xs text-text-muted mb-4">If you lose access to your device, these will be the only way to access your account.</p>
-                         <div className="grid grid-cols-2 gap-2 mb-4 bg-gray-50 dark:bg-gray-900 p-3 rounded-xl">
-                            {backupCodes.map((code, i) => (
-                                <code key={i} className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-700">{code}</code>
-                            ))}
-                         </div>
-                         <button 
-                            onClick={() => copyToClipboard(backupCodes.join('\n'), setCopiedBackup)}
-                            className="flex items-center justify-center gap-2 text-xs font-bold text-primary hover:underline w-full"
-                         >
-                            {copiedBackup ? <Check className="size-3" /> : <Copy className="size-3" />}
-                            {copiedBackup ? 'Copied!' : 'Copy to clipboard'}
-                         </button>
-                         <button onClick={() => setBackupCodes(null)} className="mt-4 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 underline">Done</button>
-                    </div>
-                ) : isSettingUp2FA && setupData ? (
-                  <div className="w-full animate-in fade-in duration-300 flex flex-col items-center">
-                    <div className="bg-white p-2 rounded-xl shadow-sm mb-4">
-                        <QRCodeSVG value={setupData.qrCodeUrl} size={160} level="M" />
-                    </div>
-                    <div className="w-full bg-gray-50 dark:bg-gray-900 p-3 rounded-xl flex items-center justify-between gap-2 border border-gray-100 dark:border-gray-700">
-                        <code className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate max-w-[200px]">{setupData.secret}</code>
-                        <button 
-                            onClick={() => copyToClipboard(setupData.secret, setCopiedSecret)}
-                            className="text-gray-400 hover:text-primary transition-colors p-1"
-                            title="Copy Secret"
-                        >
-                            {copiedSecret ? <Check className="size-4" /> : <Copy className="size-4" />}
-                        </button>
-                    </div>
-                    <p className="text-[10px] text-gray-400 mt-2">Can't scan? Enter this code manually.</p>
                   </div>
-                ) : (
-                  <>
-                    <div className="size-24 md:size-32 bg-gray-50 dark:bg-gray-900/50 rounded-xl mb-4 flex items-center justify-center shadow-inner">
-                      <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest px-4 text-center">Setup Required</p>
-                    </div>
-                    <p className="text-[10px] text-gray-400">Security flow will appear here after initiation.</p>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
+                  
+                  {!twoFactorStatus.isEnabled ? (
+                    !isSettingUp2FA ? (
+                       <button 
+                         onClick={handleStart2FASetup}
+                         disabled={twoFactorLoading}
+                         className="w-full bg-primary hover:bg-primary/90 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 text-sm md:text-base flex items-center justify-center gap-2"
+                       >
+                         {twoFactorLoading ? 'Loading...' : 'Setup 2FA'}
+                       </button>
+                    ) : (
+                      <div className="space-y-4">
+                          <p className="text-sm text-text-muted">1. Scan the QR code with your authenticator app.</p>
+                          <p className="text-sm text-text-muted">2. Enter the 6-digit code below to verify.</p>
+                          <input 
+                              type="text" 
+                              maxLength={6}
+                              placeholder="000000"
+                              value={verificationCode}
+                              onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono text-center text-lg tracking-widest outline-none dark:text-white"
+                          />
+                           <div className="flex gap-2">
+                             <button onClick={() => { setIsSettingUp2FA(false); setSetupData(null); }} className="flex-1 py-3 text-sm font-bold text-text-muted hover:text-text-main bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">Cancel</button>
+                             <button 
+                               onClick={handleVerify2FA} 
+                               disabled={verificationCode.length !== 6 || twoFactorLoading}
+                               className="flex-1 py-3 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                             >
+                                {twoFactorLoading ? 'Verifying...' : 'Verify'}
+                             </button>
+                           </div>
+                           {twoFactorError && <p className="text-xs text-red-500 font-bold text-center">{twoFactorError}</p>}
+                      </div>
+                    )
+                  ) : (
+                      <button 
+                         onClick={handleDisable2FA}
+                         className="w-full bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 py-3.5 rounded-xl font-bold transition-all text-sm md:text-base"
+                      >
+                         Disable 2FA
+                      </button>
+                  )}
+                </div>
 
+                {/* Right Side: QR Code / Backup Codes */}
+                <div className="flex-1 w-full max-w-md border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-3xl p-6 flex flex-col items-center justify-center text-center min-h-[250px] relative bg-white dark:bg-gray-800">
+                  {twoFactorStatus.isEnabled && !backupCodes ? (
+                      <div className="flex flex-col items-center">
+                          <div className="size-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+                              <Check className="size-8" />
+                          </div>
+                          <h4 className="text-lg font-bold dark:text-white mb-2">2FA is complete</h4>
+                          <p className="text-sm text-text-muted">Your account is secured with two-factor authentication.</p>
+                      </div>
+                  ) : backupCodes ? (
+                      <div className="w-full animate-in fade-in zoom-in duration-300">
+                           <h4 className="text-lg font-bold dark:text-white mb-2 text-red-500 flex items-center justify-center gap-2">
+                              <AlertTriangle className="size-5" />
+                              Save these backup codes!
+                           </h4>
+                           <p className="text-xs text-text-muted mb-4">If you lose access to your device, these will be the only way to access your account.</p>
+                           <div className="grid grid-cols-2 gap-2 mb-4 bg-gray-50 dark:bg-gray-900 p-3 rounded-xl">
+                              {backupCodes.map((code, i) => (
+                                  <code key={i} className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-700">{code}</code>
+                              ))}
+                           </div>
+                           <button 
+                              onClick={() => copyToClipboard(backupCodes.join('\n'), setCopiedBackup)}
+                              className="flex items-center justify-center gap-2 text-xs font-bold text-primary hover:underline w-full"
+                           >
+                              {copiedBackup ? <Check className="size-3" /> : <Copy className="size-3" />}
+                              {copiedBackup ? 'Copied!' : 'Copy to clipboard'}
+                           </button>
+                           <button onClick={() => setBackupCodes(null)} className="mt-4 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 underline">Done</button>
+                      </div>
+                  ) : isSettingUp2FA && setupData ? (
+                    <div className="w-full animate-in fade-in duration-300 flex flex-col items-center">
+                      <div className="bg-white p-2 rounded-xl shadow-sm mb-4">
+                          <QRCodeSVG value={setupData.qrCodeUrl} size={160} level="M" />
+                      </div>
+                      <div className="w-full bg-gray-50 dark:bg-gray-900 p-3 rounded-xl flex items-center justify-between gap-2 border border-gray-100 dark:border-gray-700">
+                          <code className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate max-w-[200px]">{setupData.secret}</code>
+                          <button 
+                              onClick={() => copyToClipboard(setupData.secret, setCopiedSecret)}
+                              className="text-gray-400 hover:text-primary transition-colors p-1"
+                              title="Copy Secret"
+                          >
+                              {copiedSecret ? <Check className="size-4" /> : <Copy className="size-4" />}
+                          </button>
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-2">Can't scan? Enter this code manually.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="size-24 md:size-32 bg-gray-50 dark:bg-gray-900/50 rounded-xl mb-4 flex items-center justify-center shadow-inner">
+                        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest px-4 text-center">Setup Required</p>
+                      </div>
+                      <p className="text-[10px] text-gray-400">Security flow will appear here after initiation.</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </section>
+          </FadeIn>
 
           {/* Activity Log - Real Data */}
-          <ActivityLog />
-        </div>
+          <FadeIn delay={0.3}>
+            <section className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-6 md:p-10 border border-gray-100 dark:border-gray-700 shadow-sm transition-all hover:shadow-md">
+               <h3 className="text-xl font-bold mb-2 dark:text-white flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">history</span>
+                  Activity Log
+               </h3>
+               <p className="text-text-muted dark:text-gray-400 text-sm mb-8">Recent actions performed on your account.</p>
+               <ActivityLog />
+            </section>
+          </FadeIn>
       </div>
-    </>
+    </div>
   );
 }

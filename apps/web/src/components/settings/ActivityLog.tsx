@@ -54,6 +54,7 @@ const LogEntryRow = ({ log }: { log: LogEntry }) => {
 };
 
 import { createClient } from '@/lib/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function ActivityLog() {
   const { user } = useAuth();
@@ -93,6 +94,50 @@ export function ActivityLog() {
     }
   }, [user]);
 
+  if (loading) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="p-5 md:p-8 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h3 className="text-lg md:text-xl font-bold mb-1 dark:text-white">Activity Log</h3>
+            <p className="text-text-muted dark:text-gray-400 text-xs md:text-sm">HIPAA-compliant audit trail of all account actions.</p>
+          </div>
+          <Skeleton className="h-8 w-24 rounded-md" />
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-[600px]">
+            <thead>
+              <tr className="bg-gray-50/50 dark:bg-gray-700/20">
+                <th className="py-4 px-6 md:px-8 text-[10px] font-bold text-text-muted uppercase tracking-widest">Action</th>
+                <th className="py-4 px-6 md:px-8 text-[10px] font-bold text-text-muted uppercase tracking-widest">Device / Source</th>
+                <th className="py-4 px-6 md:px-8 text-[10px] font-bold text-text-muted uppercase tracking-widest">IP Address</th>
+                <th className="py-4 px-6 md:px-8 text-[10px] font-bold text-text-muted uppercase tracking-widest text-right">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm divide-y divide-gray-50 dark:divide-gray-700/50">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                  <td className="py-4 px-6 md:px-8">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="size-5 rounded-full" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                  </td>
+                  <td className="py-4 px-6 md:px-8"><Skeleton className="h-4 w-24" /></td>
+                  <td className="py-4 px-6 md:px-8"><Skeleton className="h-4 w-28" /></td>
+                  <td className="py-4 px-6 md:px-8 text-right"><Skeleton className="h-4 w-20 ml-auto" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="p-4 bg-gray-50 dark:bg-gray-900/30 text-center">
+          <Skeleton className="h-4 w-28 mx-auto" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
       <div className="p-5 md:p-8 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -114,7 +159,6 @@ export function ActivityLog() {
             </tr>
           </thead>
           <tbody className="text-sm divide-y divide-gray-50 dark:divide-gray-700/50">
-            {loading ? (
                <tr>
                  <td colSpan={4} className="py-8 text-center text-text-muted">Loading logs...</td>
                </tr>
