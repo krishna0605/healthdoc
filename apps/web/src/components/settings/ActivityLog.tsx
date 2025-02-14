@@ -159,8 +159,9 @@ export function ActivityLog() {
             </tr>
           </thead>
           <tbody className="text-sm divide-y divide-gray-50 dark:divide-gray-700/50">
+            {error ? (
                <tr>
-                 <td colSpan={4} className="py-8 text-center text-text-muted">Loading logs...</td>
+                 <td colSpan={4} className="py-8 text-center text-red-500">{error}</td>
                </tr>
             ) : logs.length === 0 ? (
                <tr>
