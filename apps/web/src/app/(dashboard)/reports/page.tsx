@@ -7,7 +7,9 @@ import { Info, Plus, FileText, Trash2, CheckCircle, AlertCircle, RefreshCw, Load
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useFamilyMembers, initFamilyProfile } from '@/hooks/useFamilyMembers';
 import { createReport } from '@/hooks/useReports';
+import { useReportStatus } from '@/hooks/useReportStatus';
 import { createClient } from '@/lib/supabase/client';
+import type { ReportStatus } from '@/types';
 
 interface FileWithProgress {
   id: string; // Unique ID for tracking
@@ -27,6 +29,41 @@ export default function ReportsPage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
+  
+  const [analyzingReportId, setAnalyzingReportId] = useState<string | null>(null);
+  const { status: reportStatus } = useReportStatus(analyzingReportId, 'UPLOADED');
+
+  // Monitor analysis status
+  useEffect(() => {
+    if (!analyzingReportId) return;
+
+    const getStatusMessage = (status: ReportStatus) => {
+      switch (status) {
+        case 'UPLOADED': return 'Queued...';
+        case 'OCR_PROCESSING': return 'Reading document...';
+        case 'OCR_COMPLETE': return 'Document read complete...';
+        case 'ANALYSIS_PROCESSING': return 'Analyzing health data...';
+        case 'ANALYSIS_COMPLETE': return 'Health data analyzed...';
+        case 'EMBEDDING_PROCESSING': return 'Indexing for search...';
+        case 'READY': return 'Analysis Complete!';
+        case 'FAILED': return 'Analysis Failed';
+        default: return 'Processing...';
+      }
+    };
+
+    setProcessingStatus(getStatusMessage(reportStatus));
+
+    if (reportStatus === 'READY') {
+      setTimeout(() => {
+        router.push(`/reports/${analyzingReportId}`);
+      }, 1000);
+    } else if (reportStatus === 'FAILED') {
+      setIsProcessing(false);
+      setAnalyzingReportId(null);
+      alert('Report analysis failed. Please try again.');
+    }
+  }, [reportStatus, analyzingReportId, router]);
+
   
   // Step-based flow: 1 = Upload, 2 = Fill Details, 3 = Processing
   const [currentStep, setCurrentStep] = useState(1);
@@ -199,15 +236,13 @@ export default function ReportsPage() {
         }
       }
       
-      // Success! Redirect to the report detail page
-      setProcessingStatus('Done! Redirecting to your report...');
-      setTimeout(() => {
-        if (lastReportId) {
-          router.push(`/reports/${lastReportId}`);
-        } else {
-          router.push('/dashboard');
-        }
-      }, 1000);
+      // Start tracking progress
+      if (lastReportId) {
+        setAnalyzingReportId(lastReportId);
+      } else {
+        setIsProcessing(false);
+        router.push('/dashboard');
+      }
       
     } catch (error) {
       console.error('Analysis failed:', error);

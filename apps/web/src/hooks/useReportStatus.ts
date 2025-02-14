@@ -7,11 +7,13 @@ import type { ReportStatus } from '@/types'
 /**
  * Hook to subscribe to real-time report status updates
  */
-export function useReportStatus(reportId: string, initialStatus: ReportStatus) {
+export function useReportStatus(reportId: string | null, initialStatus: ReportStatus = 'UPLOADED') {
   const [status, setStatus] = useState<ReportStatus>(initialStatus)
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
+    if (!reportId) return
+
     const supabase = createClient()
 
     const channel = supabase
