@@ -81,7 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
         <ThemeToggle />
 
         <Link href="/settings" className="cursor-pointer hover:scale-110 transition-transform" title="Profile & Settings">
-          <div className="size-10 rounded-full bg-gradient-to-tr from-green-300 to-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white font-bold text-sm">
+          <div className="size-10 rounded-full bg-linear-to-tr from-green-300 to-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white font-bold text-sm">
             {userInitials}
           </div>
         </Link>
