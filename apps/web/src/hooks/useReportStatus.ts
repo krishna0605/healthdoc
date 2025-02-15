@@ -60,10 +60,19 @@ export function useReportStatus(reportId: string | null, initialStatus: ReportSt
         console.log(`[useReportStatus] Subscription status: ${status}`)
       })
 
+    // 3. Polling fallback (every 3 seconds)
+    // This ensures we catch updates even if WebSocket fails or is blocked
+    const intervalId = setInterval(() => {
+      if (status !== 'READY' && status !== 'FAILED') {
+        fetchCurrentStatus()
+      }
+    }, 3000)
+
     return () => {
       supabase.removeChannel(channel)
+      clearInterval(intervalId)
     }
-  }, [reportId])
+  }, [reportId, status])
 
   return { status, isLoading }
 }
