@@ -9,6 +9,7 @@ import { useFamilyMembers, initFamilyProfile } from '@/hooks/useFamilyMembers';
 import { createReport } from '@/hooks/useReports';
 import { useReportStatus } from '@/hooks/useReportStatus';
 import { createClient } from '@/lib/supabase/client';
+import { Tooltip } from '@/components/ui/tooltip';
 import type { ReportStatus } from '@/types';
 
 interface FileWithProgress {
@@ -286,10 +287,20 @@ export default function ReportsPage() {
           <div className="w-12 h-0.5 bg-gray-200 dark:bg-gray-700"></div>
           
           {/* Step 3: Analyze */}
-          <div className="flex items-center gap-2 text-gray-400">
-            <div className="size-8 rounded-full bg-white border-2 border-gray-200 dark:bg-gray-800 dark:border-gray-600 flex items-center justify-center">3</div>
-            <span>Analyze</span>
-          </div>
+          <Tooltip content="We analyze your report using AI to generate insights">
+            <div className={`flex items-center gap-2 ${reportStatus === 'READY' ? 'text-green-500' : analyzingReportId ? 'text-primary' : 'text-gray-400'}`}>
+              <div className={`size-8 rounded-full flex items-center justify-center border-2 transition-all ${
+                reportStatus === 'READY'
+                  ? 'bg-green-500 text-white border-green-500 shadow-lg shadow-green-500/20' 
+                  : analyzingReportId
+                    ? 'border-primary text-primary animate-pulse'
+                    : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-600'
+              }`}>
+                {reportStatus === 'READY' ? '✓' : '3'}
+              </div>
+              <span>Analyze</span>
+            </div>
+          </Tooltip>
         </div>
       </div>
 
@@ -297,35 +308,37 @@ export default function ReportsPage() {
         {/* Left Column: Upload & Form */}
         <div className="lg:col-span-2 space-y-8">
           {/* Uploader */}
-          <div 
-            className={`bg-white dark:bg-gray-800 p-10 rounded-[2rem] border-2 border-dashed transition-all cursor-pointer ${
-              isDragOver 
-                ? 'border-primary bg-primary/5' 
-                : 'border-gray-200 dark:border-gray-600 hover:border-primary'
-            }`}
-            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={handleDrop}
-            onClick={() => document.getElementById('file-input')?.click()}
-          >
-            <input 
-              id="file-input"
-              type="file" 
-              className="hidden" 
-              multiple 
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={(e) => handleFilesSelected(e.target.files)}
-            />
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className={`size-20 rounded-full flex items-center justify-center mb-6 transition-all ${
-                isDragOver ? 'bg-primary text-white scale-110' : 'bg-primary/10 text-primary'
-              }`}>
-                <span className="material-symbols-outlined text-4xl">cloud_upload</span>
+          <Tooltip content="Drag & drop your medical reports here">
+            <div 
+              className={`bg-white dark:bg-gray-800 p-10 rounded-[2rem] border-2 border-dashed transition-all cursor-pointer ${
+                isDragOver 
+                  ? 'border-primary bg-primary/5' 
+                  : 'border-gray-200 dark:border-gray-600 hover:border-primary'
+              }`}
+              onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => document.getElementById('file-input')?.click()}
+            >
+              <input 
+                id="file-input"
+                type="file" 
+                className="hidden" 
+                multiple 
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => handleFilesSelected(e.target.files)}
+              />
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className={`size-20 rounded-full flex items-center justify-center mb-6 transition-all ${
+                  isDragOver ? 'bg-primary text-white scale-110' : 'bg-primary/10 text-primary'
+                }`}>
+                  <span className="material-symbols-outlined text-4xl">cloud_upload</span>
+                </div>
+                <h3 className="text-2xl font-bold mb-2 dark:text-white">Drop files here or click to browse</h3>
+                <p className="text-text-muted dark:text-gray-400 text-sm">Supports PDF, JPG, PNG up to 50MB</p>
               </div>
-              <h3 className="text-2xl font-bold mb-2 dark:text-white">Drop files here or click to browse</h3>
-              <p className="text-text-muted dark:text-gray-400 text-sm">Supports PDF, JPG, PNG up to 50MB</p>
             </div>
-          </div>
+          </Tooltip>
 
           {/* Uploaded Files List */}
           {uploadedFiles.length > 0 && (
@@ -403,8 +416,11 @@ export default function ReportsPage() {
               
               <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-bold mb-2 dark:text-white">
+                  <label className="text-sm font-bold mb-2 dark:text-white flex items-center gap-2">
                     Report Title
+                    <Tooltip content="Name this report for easy identification">
+                      <Info className="size-4 text-gray-400" />
+                    </Tooltip>
                   </label>
                   <input
                     type="text"
@@ -417,8 +433,11 @@ export default function ReportsPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-bold mb-2 dark:text-white">
+                  <label className="text-sm font-bold mb-2 dark:text-white flex items-center gap-2">
                     Report Date
+                    <Tooltip content="The date shown on the medical report">
+                      <Info className="size-4 text-gray-400" />
+                    </Tooltip>
                   </label>
                   <input
                     type="date"
@@ -443,7 +462,12 @@ export default function ReportsPage() {
         {/* Right Column: Patient & Info */}
         <div className="space-y-8">
           <div className="bg-white dark:bg-gray-800 p-8 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-700">
-            <h3 className="text-lg font-bold mb-6 dark:text-white">Patient Selection</h3>
+            <h3 className="text-lg font-bold mb-6 dark:text-white flex items-center gap-2">
+              Patient Selection
+              <Tooltip content="Select who this report belongs to">
+                <Info className="size-4 text-gray-400" />
+              </Tooltip>
+            </h3>
             
             <div className="space-y-4 mb-8">
               {membersLoading ? (

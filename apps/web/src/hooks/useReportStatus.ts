@@ -16,8 +16,29 @@ export function useReportStatus(reportId: string | null, initialStatus: ReportSt
 
     const supabase = createClient()
 
+    // 1. Fetch current status immediately to handle any missed events
+    const fetchCurrentStatus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('reports')
+          .select('status')
+          .eq('id', reportId)
+          .single()
+        
+        if (data && !error) {
+          console.log(`[useReportStatus] Initial fetch for ${reportId}:`, data.status)
+          setStatus(data.status as ReportStatus)
+        }
+      } catch (err) {
+        console.error('Error fetching report status:', err)
+      }
+    }
+
+    fetchCurrentStatus()
+
+    // 2. Subscribe to real-time updates
     const channel = supabase
-      .channel(`report:${reportId}`)
+      .channel(`report-status-${reportId}`)
       .on(
         'postgres_changes',
         {
@@ -28,13 +49,16 @@ export function useReportStatus(reportId: string | null, initialStatus: ReportSt
         },
         (payload) => {
           const newStatus = payload.new.status as ReportStatus
+          console.log(`[useReportStatus] Realtime update: ${newStatus}`)
           setStatus(newStatus)
           setIsLoading(
             newStatus !== 'READY' && newStatus !== 'FAILED'
           )
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log(`[useReportStatus] Subscription status: ${status}`)
+      })
 
     return () => {
       supabase.removeChannel(channel)
