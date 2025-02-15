@@ -10,6 +10,7 @@ import type { ReportStatus } from '@/types'
 export function useReportStatus(reportId: string | null, initialStatus: ReportStatus = 'UPLOADED') {
   const [status, setStatus] = useState<ReportStatus>(initialStatus)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!reportId) return
@@ -25,12 +26,17 @@ export function useReportStatus(reportId: string | null, initialStatus: ReportSt
           .eq('id', reportId)
           .single()
         
-        if (data && !error) {
+        if (error) throw error
+        
+        if (data) {
           console.log(`[useReportStatus] Initial fetch for ${reportId}:`, data.status)
           setStatus(data.status as ReportStatus)
+          setError(null)
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching report status:', err)
+        // If it's 406 or RLS error, we want to know
+        setError(err.message)
       }
     }
 
@@ -74,5 +80,5 @@ export function useReportStatus(reportId: string | null, initialStatus: ReportSt
     }
   }, [reportId, status])
 
-  return { status, isLoading }
+  return { status, isLoading, error }
 }
