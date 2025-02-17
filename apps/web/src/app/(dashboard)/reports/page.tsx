@@ -32,13 +32,20 @@ export default function ReportsPage() {
   const [processingStatus, setProcessingStatus] = useState<string>('');
   
   const [analyzingReportId, setAnalyzingReportId] = useState<string | null>(null);
-  const { status: reportStatus } = useReportStatus(analyzingReportId, 'UPLOADED');
+  const { status: reportStatus, error: reportError } = useReportStatus(analyzingReportId, 'UPLOADED');
 
   // Monitor analysis status
   useEffect(() => {
     if (!analyzingReportId) return;
 
+    if (reportError) {
+       console.error("Report Status Error:", reportError);
+       setProcessingStatus(`Error: ${reportError}. Please refresh.`);
+       // Don't auto-reset yet, let user see error
+    }
+
     const getStatusMessage = (status: ReportStatus) => {
+      if (reportError) return `Connection Error: ${reportError}`;
       switch (status) {
         case 'UPLOADED': return 'Queued...';
         case 'OCR_PROCESSING': return 'Reading document...';
@@ -303,6 +310,15 @@ export default function ReportsPage() {
           </Tooltip>
         </div>
       </div>
+
+      {reportError && (
+        <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-2">
+          <AlertCircle className="size-5" />
+          <p className="font-medium">
+            Connection Error: {reportError}. Please try refreshing the page.
+          </p>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column: Upload & Form */}
