@@ -79,7 +79,8 @@ export const initReportWorker = () => {
             confidenceScore: 0.9,
             abnormalityCount: result.abnormalities?.length || 0,
             reportType: result.report_type || 'LAB_REPORT',
-            tags: result.tags || []
+            tags: result.tags || [],
+            predictions: result.predictions || []
           }
         })
 

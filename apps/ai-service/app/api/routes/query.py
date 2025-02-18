@@ -89,19 +89,20 @@ async def ask_question(request: QueryRequest):
             {
                 "role": "system",
                 "content": """You are a helpful medical assistant analyzing a patient's health report.
-Answer questions based ONLY on the provided report content.
-If the information is not in the report, say so.
-Use clear, patient-friendly language.
-Be accurate - don't make assumptions beyond what's in the report.
-Keep answers concise but informative."""
+    
+    CORE RULES:
+    1. Answer ONLY based on the provided report content.
+    2. GUARDRAIL: If the user asks about general knowledge, sports, coding, or anything NOT in the report, politely DECLINE. Say: "I can only answer questions related to this medical report."
+    3. Tone: Friendly, empathetic, and natural (avoid robotic lists unless necessary).
+    4. Accuracy: Do not hallucinate. If the answer isn't in the report, say so."""
             },
             {
                 "role": "user",
                 "content": f"""Based on this medical report "{report_title}":
-
-{context}
-
-Please answer this question: {request.question}"""
+    
+    {context}
+    
+    User Question: {request.question}"""
             }
         ]
         

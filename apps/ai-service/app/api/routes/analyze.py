@@ -64,6 +64,7 @@ class AnalysisResult(BaseModel):
     key_findings: List[str]
     metrics: List[MetricResult]
     abnormalities: List[AbnormalityResult]
+    predictions: List[str] = []
     report_id: str
 
 
@@ -245,7 +246,8 @@ async def analyze_report(request: AnalyzeRequest):
             clinical_summary=data.get("clinical_summary", "No summary available"),
             key_findings=data.get("key_findings", []),
             metrics=valid_metrics,
-            abnormalities=valid_abnormalities
+            abnormalities=valid_abnormalities,
+            predictions=data.get("predictions", [])
         )
 
         print(f"✅ Analysis Complete for {request.report_id}")
@@ -268,6 +270,11 @@ def get_analysis_prompt() -> str:
        - **Prescription**: Extract medicine names, dosages, frequencies, and duration as 'key_findings'.
        - **Radiology**: Extract the 'Impression', 'Findings', and 'Body Part' as 'report_description' and 'key_findings'.
     
+    4. **Detailed Analysis**:
+       - **Patient Summary**: A DETAILED, plain-language explanation (at least 2 paragraphs). Explain what the results mean for the patient's health.
+       - **Predictions**: Based on the findings, list potential risks or future conditions.
+       - **Disclaimer**: YOU MUST PREPEND "CAUTION: AI PREDICTION" to any prediction.
+
     Return a JSON object with this EXACT structure:
     {
       "patient_name": "Name or Unknown",
@@ -275,11 +282,12 @@ def get_analysis_prompt() -> str:
       "report_date": "YYYY-MM-DD or null",
       "report_type": "LAB_REPORT",
       "tags": ["Tag1", "Tag2"],
-      "report_description": "Brief summary of what this report is.",
+      "report_description": "Detailed summary (2+ paragraphs) of what this report is.",
       "extracted_text": "Concise text dump of the report content.",
-      "patient_summary": "Simple, plain-language summary for the patient (start with 'Dear [Name]'). Explain what the results mean.",
+      "patient_summary": "Detailed plain-language summary.",
       "clinical_summary": "Technical summary for a doctor.",
       "key_findings": ["Finding 1", "Finding 2"],
+      "predictions": ["CAUTION: AI PREDICTION - Risk of X", "CAUTION: AI PREDICTION - Possible Y"],
       "metrics": [
         {
           "name": "Hemoglobin",

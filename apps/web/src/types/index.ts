@@ -26,6 +26,7 @@ export interface Report {
   createdAt: string
   updatedAt: string
   processedAt?: string
+  analysis?: Analysis
 }
 
 // ============================================
@@ -81,10 +82,15 @@ export interface Analysis {
   abnormalityCount: number
   overallRiskScore?: number
   confidenceScore?: number
+  reportType: 'LAB_REPORT' | 'PRESCRIPTION' | 'RADIOLOGY' | 'PATHOLOGY' | 'OTHER'
+  tags: string[]
+  predictions: string[]
   createdAt: string
   abnormalities: Abnormality[]
   riskIndicators: RiskIndicator[]
 }
+
+export type ReportType = 'LAB_REPORT' | 'PRESCRIPTION' | 'RADIOLOGY' | 'PATHOLOGY' | 'OTHER'
 
 // ============================================
 // REPORT WITH ANALYSIS (FULL)

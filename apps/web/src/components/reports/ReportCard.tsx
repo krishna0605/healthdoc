@@ -55,23 +55,46 @@ export function ReportCard({ report, className }: ReportCardProps) {
                 <h3 className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
                   {report.title}
                 </h3>
-                <Badge
-                  variant={
-                    status === 'READY'
-                      ? 'success'
-                      : status === 'FAILED'
-                      ? 'destructive'
-                      : 'processing'
-                  }
-                  pulse={isProcessing}
-                >
-                  {statusInfo.label}
-                </Badge>
+                <div className="flex gap-2">
+                  {(report.analysis as any)?.reportType && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      {(report.analysis as any).reportType.replace('_', ' ')}
+                    </Badge>
+                  )}
+                  <Badge
+                    variant={
+                      status === 'READY'
+                        ? 'success'
+                        : status === 'FAILED'
+                        ? 'destructive'
+                        : 'processing'
+                    }
+                    pulse={isProcessing}
+                  >
+                    {statusInfo.label}
+                  </Badge>
+                </div>
               </div>
 
               <p className="mt-1 text-sm text-gray-500 truncate">
                 {report.originalFileName}
               </p>
+
+              {/* Tags */}
+              {(report.analysis as any)?.tags && (report.analysis as any).tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {(report.analysis as any).tags.slice(0, 3).map((tag: string, i: number) => (
+                    <span key={i} className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium border border-gray-200">
+                      {tag}
+                    </span>
+                  ))}
+                  {(report.analysis as any).tags.length > 3 && (
+                    <span className="px-2 py-0.5 rounded-full bg-gray-50 text-gray-400 text-xs border border-gray-100">
+                      +{(report.analysis as any).tags.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
 
               <div className="mt-3 flex items-center gap-4 text-sm text-gray-400">
                 <span className="flex items-center gap-1">

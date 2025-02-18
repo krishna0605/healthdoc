@@ -22,6 +22,9 @@ export interface Report {
   analysis?: {
     id: string
     createdAt: string
+    reportType?: string
+    tags?: string[]
+    predictions?: string[]
   }
 }
 
@@ -36,6 +39,9 @@ export interface ReportDetail extends Report {
     patientSummary?: string
     clinicalSummary?: string
     keyFindings?: string[]
+    reportType?: string
+    tags?: string[]
+    predictions?: string[]
     createdAt: string
     abnormalities: Array<{
       id: string

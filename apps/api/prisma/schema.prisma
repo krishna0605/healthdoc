@@ -118,6 +118,7 @@ model Analysis {
   overallRiskScore   Float?   @map("overall_risk_score")
   confidenceScore    Float?   @map("confidence_score")
   tags               String[]
+  predictions        String[]
   reportType         ReportType @default(LAB_REPORT) @map("report_type")
   createdAt          DateTime @default(now()) @map("created_at")
 

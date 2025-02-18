@@ -42,33 +42,13 @@ const categories = ['All', 'Lab Results', 'Imaging', 'Prescriptions', 'Vaccinati
 export default function RecordsPage() {
   const router = useRouter();
   const { reports, loading, error } = useReports();
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Filter reports based on search and category
+  // Filter reports based on search
   const filteredReports = reports.filter(report => {
     // Search Filter
     const matchesSearch = report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           report.originalFileName.toLowerCase().includes(searchQuery.toLowerCase());
     
-    if (!matchesSearch) return false;
-
-    // Category Filter
-    switch (activeCategory) {
-      case 'Lab Results':
-        return report.fileType === 'PDF' || report.fileType === 'TEXT';
-      case 'Imaging':
-        return report.fileType === 'IMAGE';
-      case 'Prescriptions':
-        const titleLower = report.title.toLowerCase();
-        return titleLower.includes('prescription') || titleLower.includes('rx') || titleLower.includes('medication');
-      case 'Vaccinations':
-        const vacLower = report.title.toLowerCase();
-        return vacLower.includes('vaccine') || vacLower.includes('immunization') || vacLower.includes('shot') || vacLower.includes('vax');
-      case 'All':
-      default:
-        return true;
-    }
+    return matchesSearch;
   });
 
   const formatDate = (dateString: string) => {
@@ -94,24 +74,7 @@ export default function RecordsPage() {
         </Link>
       </div>
 
-      {/* Filters Row */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        {/* Category Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
-          {categories.map(category => (
-            <button
-              key={category}
-              onClick={() => setActiveCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
-                activeCategory === category
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
+
 
         {/* Search */}
         <div className="flex-1 md:max-w-xs ml-auto">
