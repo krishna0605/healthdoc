@@ -197,11 +197,11 @@ export default function ReportDetailPage() {
   }
 
   // Parse metrics for display
-  const metrics: MetricRowProps[] = (report.metrics || []).map(m => ({
+  const metrics = (report.metrics || []).map(m => ({
     name: m.name,
     value: String(m.value),
     unit: m.unit,
-    status: m.status?.toLowerCase() as 'normal' | 'high' | 'low',
+    status: (m.status?.toLowerCase() || 'normal') as 'normal' | 'high' | 'low',
     range: m.referenceRange
   }));
 
@@ -557,7 +557,9 @@ export default function ReportDetailPage() {
                 </div>
               </div>
             )}
-          </div>
+            
+            {/* Close the About section properly */}
+            </div>
 
             {/* Key Findings */}
             {report.analysis?.keyFindings && report.analysis.keyFindings.length > 0 && (
