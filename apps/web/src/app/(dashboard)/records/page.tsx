@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Upload, FileText, ChevronRight, CheckCircle, AlertTriangle, Clock, ArrowRight, Filter, User } from 'lucide-react';
+import { Search, Upload, FileText, ChevronRight, CheckCircle, AlertTriangle, Clock, User } from 'lucide-react';
 import { useReports, Report } from '@/hooks/useReports';
 
 // Status badge component
@@ -36,12 +36,13 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-// Category tabs
-const categories = ['All', 'Lab Results', 'Imaging', 'Prescriptions', 'Vaccinations'];
+
 
 export default function RecordsPage() {
   const router = useRouter();
   const { reports, loading, error } = useReports();
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Filter reports based on search
   const filteredReports = reports.filter(report => {
     // Search Filter
@@ -76,8 +77,9 @@ export default function RecordsPage() {
 
 
 
-        {/* Search */}
-        <div className="flex-1 md:max-w-xs ml-auto">
+      {/* Search */}
+      <div className="flex mb-8 justify-end">
+        <div className="w-full md:max-w-xs">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
             <input
@@ -119,8 +121,6 @@ export default function RecordsPage() {
             <p className="text-text-muted dark:text-gray-400 mb-6">
               {searchQuery 
                 ? 'Try a different search term.' 
-                : activeCategory !== 'All' 
-                ? `No ${activeCategory.toLowerCase()} found.`
                 : 'Upload your first medical report to get started.'}
             </p>
             <Link 
