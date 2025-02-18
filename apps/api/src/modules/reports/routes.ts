@@ -44,7 +44,9 @@ export async function reportRoutes(fastify: FastifyInstance) {
         analysis: {
           select: {
             id: true,
-            createdAt: true
+            createdAt: true,
+            reportType: true,
+            tags: true
           }
         },
         familyMember: {

@@ -160,6 +160,19 @@ export default function RecordsPage() {
                   </div>
                 </div>
 
+                {/* Report Type Badge - Inserted here */}
+                {report.analysis?.reportType && (
+                  <div className={`hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider
+                    ${report.analysis.reportType === 'LAB_REPORT' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800' : 
+                      report.analysis.reportType === 'RADIOLOGY' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800' :
+                      report.analysis.reportType === 'PRESCRIPTION' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' :
+                      'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
+                    }`}
+                  >
+                    {report.analysis.reportType.replace('_', ' ')}
+                  </div>
+                )}
+
                 {/* Family Profile Avatar */}
                 {report.familyMember && (
                   <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
