@@ -75,9 +75,11 @@ export const initReportWorker = () => {
             reportDescription: result.report_description || null,
             patientSummary: result.patient_summary || 'No summary available',
             clinicalSummary: result.clinical_summary || 'No clinical summary available',
-            keyFindings: result.key_findings || [], // Prisma handles JSON array
-            confidenceScore: 0.9, // Hardcoded for now or get from result
-            abnormalityCount: result.abnormalities?.length || 0
+            keyFindings: result.key_findings || [],
+            confidenceScore: 0.9,
+            abnormalityCount: result.abnormalities?.length || 0,
+            reportType: result.report_type || 'LAB_REPORT',
+            tags: result.tags || []
           }
         })
 
@@ -89,6 +91,7 @@ export const initReportWorker = () => {
               name: m.name,
               value: m.value,
               unit: m.unit,
+              standardRange: m.standard_range || null,
               status: m.status?.toUpperCase(), 
               category: m.category
             }))

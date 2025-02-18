@@ -39,6 +39,7 @@ class MetricResult(BaseModel):
     name: str
     value: float
     unit: str
+    standard_range: Optional[str] = None
     status: str  # "NORMAL", "LOW", "HIGH", "CRITICAL_LOW", "CRITICAL_HIGH"
     category: Optional[str] = None
 
@@ -55,6 +56,8 @@ class AnalysisResult(BaseModel):
     lab_name: Optional[str] = None
     report_date: Optional[str] = None
     report_description: Optional[str] = None
+    report_type: str = "LAB_REPORT"
+    tags: List[str] = []
     extracted_text: str
     patient_summary: str
     clinical_summary: str
@@ -106,7 +109,7 @@ async def analyze_report(request: AnalyzeRequest):
         messages = [
             {
                 "role": "system",
-                "content": "You are an expert medical AI analyst. Analyze medical reports and return structured JSON data only. Extract ONLY the actual values from the report - do NOT make up or hallucinate any data."
+                "content": "You are an expert medical AI analyst. Analyze medical reports and return structured JSON data only. You must identify the type of report (Lab, Prescription, X-Ray, etc.) and extract all relevant details with high precision. For lab reports, you MUST provide standard reference ranges for every metric."
             }
         ]
         
@@ -182,7 +185,16 @@ async def analyze_report(request: AnalyzeRequest):
         # 4. Parse Response
         try:
             text = response_text.replace("```json", "").replace("```", "").strip()
-            data = json.loads(text)
+            # Handle potential markdown artifacts
+            if "{" not in text: 
+                 raise ValueError("Response does not contain JSON")
+            
+            # Find the first { and last }
+            start = text.find("{")
+            end = text.rfind("}") + 1
+            json_str = text[start:end]
+            
+            data = json.loads(json_str)
         except Exception as e:
             print(f"JSON Parse Error: {response_text}")
             raise HTTPException(status_code=500, detail=f"Failed to parse AI response: {str(e)}")
@@ -197,7 +209,8 @@ async def analyze_report(request: AnalyzeRequest):
                         "name": str(m["name"]),
                         "value": float(m["value"]),
                         "unit": str(m["unit"]),
-                        "status": str(m.get("status", "NORMAL")),
+                        "standard_range": str(m.get("standard_range", "")),
+                        "status": str(m.get("status", "NORMAL")).upper(),
                         "category": str(m.get("category", "")) if m.get("category") else None
                     })
                 except (ValueError, TypeError):
@@ -211,7 +224,7 @@ async def analyze_report(request: AnalyzeRequest):
             if a and a.get("metricName") and a.get("severity") and a.get("description"):
                 valid_abnormalities.append({
                     "metricName": str(a["metricName"]),
-                    "severity": str(a["severity"]),
+                    "severity": str(a["severity"]).upper(),
                     "description": str(a["description"]),
                     "clinicalContext": str(a.get("clinicalContext", "")) if a.get("clinicalContext") else None
                 })
@@ -225,7 +238,9 @@ async def analyze_report(request: AnalyzeRequest):
             lab_name=data.get("lab_name"),
             report_date=data.get("report_date"),
             report_description=data.get("report_description"),
-            extracted_text=str(data.get("extracted_text", ""))[:500],
+            report_type=data.get("report_type", "LAB_REPORT"),
+            tags=data.get("tags", []),
+            extracted_text=str(data.get("extracted_text", ""))[:1500],
             patient_summary=data.get("patient_summary", "No summary available"),
             clinical_summary=data.get("clinical_summary", "No summary available"),
             key_findings=data.get("key_findings", []),
@@ -244,33 +259,50 @@ async def analyze_report(request: AnalyzeRequest):
 
 
 def get_analysis_prompt() -> str:
-    return """Analyze this medical report and extract ONLY the actual data present in the report.
-DO NOT make up or hallucinate any values. If a value is not present, do not include it.
-
-Return a JSON object with:
-
-1. "patient_name": The full name of the patient as shown on the report (if available, else "Unknown")
-2. "patient_age": The age of the patient (if available, e.g., "45 years" or "32").
-3. "lab_name": The name of the laboratory/pathology lab or hospital where the test was conducted. Look closely at the header and footer for company names or logos (e.g. 'Quest Diagnostics', 'LabCorp', 'Apollo Hospitals'). If not explicitly stated, return "Unknown Lab".
-3. "report_date": The date of the report or test (if available, in YYYY-MM-DD format)
-4. "report_description": A 2-3 sentence paragraph describing what this report is about, what tests were performed, and the general health status of the patient based on the findings
-
-5. "extracted_text": Concise text summary of the document (max 500 chars)
-6. "patient_summary": A detailed 2-3 paragraph summary in plain language (approx 150-200 words). It should start with the patient's name. Explain the key findings, their potential causes, and what the key performance metrics indicate about the patient's health. Avoid complex jargon where possible, or explain it.
-7. "clinical_summary": Technical summary for doctors based ONLY on actual data
-8. "key_findings": Array of important findings (only from actual data)
-9. "metrics": Array of health metrics ACTUALLY found in the report, each with:
-   - "name": Exact metric name from the report (e.g., "Hemoglobin", "RBC Count")
-   - "value": Numeric value as shown in report (float)
-   - "unit": Exact unit from report (e.g., "g/dL", "million/cumm")
-   - "status": Determine based on the reference range provided in report: ["NORMAL", "LOW", "HIGH", "CRITICAL_LOW", "CRITICAL_HIGH"]
-   - "category": Category (e.g., "Hematology", "Lipid Panel", "Liver Function")
-10. "abnormalities": Array of detected abnormal values, each with:
-   - "metricName": The metric name
-   - "severity": Based on how far from normal: ["BORDERLINE", "MODERATE", "CRITICAL"]
-   - "description": Brief explanation
-   - "clinicalContext": Health implications
-
-IMPORTANT: Only include metrics and values that are ACTUALLY present in the report.
-Return ONLY the JSON object, no markdown code blocks."""
-
+    return """Analyze this medical report/image and provide a detailed structured JSON response.
+    
+    1. **Identify the Report Type**: Classify as one of: ["LAB_REPORT", "PRESCRIPTION", "RADIOLOGY" (X-Ray/MRI/CT), "PATHOLOGY", "OTHER"].
+    2. **Generate Tags**: Create a list of relevant tags (e.g., "Blood Test", "Thyroid", "Chest X-Ray", "Antibiotics", "Fracture").
+    3. **Extraction**:
+       - **Lab Report**: Extract ALL test names, values, and units. If a reference range is missing, PROVIDE THE STANDARD MEDICAL RANGE for a healthy adult. Infer the status (NORMAL/LOW/HIGH) based on the range.
+       - **Prescription**: Extract medicine names, dosages, frequencies, and duration as 'key_findings'.
+       - **Radiology**: Extract the 'Impression', 'Findings', and 'Body Part' as 'report_description' and 'key_findings'.
+    
+    Return a JSON object with this EXACT structure:
+    {
+      "patient_name": "Name or Unknown",
+      "lab_name": "Lab/Hospital Name or Unknown",
+      "report_date": "YYYY-MM-DD or null",
+      "report_type": "LAB_REPORT",
+      "tags": ["Tag1", "Tag2"],
+      "report_description": "Brief summary of what this report is.",
+      "extracted_text": "Concise text dump of the report content.",
+      "patient_summary": "Simple, plain-language summary for the patient (start with 'Dear [Name]'). Explain what the results mean.",
+      "clinical_summary": "Technical summary for a doctor.",
+      "key_findings": ["Finding 1", "Finding 2"],
+      "metrics": [
+        {
+          "name": "Hemoglobin",
+          "value": 14.2,
+          "unit": "g/dL",
+          "standard_range": "13.5 - 17.5 g/dL",
+          "status": "NORMAL",
+          "category": "Hematology"
+        }
+      ],
+      "abnormalities": [
+        {
+          "metricName": "Vitamin D",
+          "severity": "MODERATE",
+          "description": "Vitamin D is lower than normal.",
+          "clinicalContext": "Low Vitamin D can lead to bone weakness."
+        }
+      ]
+    }
+    
+    IMPORTANT: 
+    - Do not invent values for metrics that are effectively missing.
+    - BUT DO provide standard ranges and categories for metrics that ARE present.
+    - Be exhaustive with metrics; extract as many as you can clearly identify.
+    - For images (X-ray, etc.), describe them in detail in 'report_description' and 'key_findings'.
+    - Return ONLY the JSON object, no markdown code blocks."""
