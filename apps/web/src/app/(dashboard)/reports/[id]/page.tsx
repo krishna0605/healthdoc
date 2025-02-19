@@ -175,6 +175,20 @@ export default function ReportDetailPage() {
     });
   };
 
+  // Parse metrics for display
+  const metrics = React.useMemo(() => {
+    return (report?.metrics || []).map((m) => {
+      const normalizedStatus = (m.status?.toLowerCase() || 'normal') as 'normal' | 'high' | 'low';
+      return {
+        name: m.name,
+        value: String(m.value),
+        unit: m.unit,
+        status: normalizedStatus,
+        range: m.referenceRange
+      };
+    });
+  }, [report?.metrics]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -195,20 +209,6 @@ export default function ReportDetailPage() {
       </div>
     );
   }
-
-  // Parse metrics for display
-  const metrics = React.useMemo(() => {
-    return (report?.metrics || []).map((m) => {
-      const normalizedStatus = (m.status?.toLowerCase() || 'normal') as 'normal' | 'high' | 'low';
-      return {
-        name: m.name,
-        value: String(m.value),
-        unit: m.unit,
-        status: normalizedStatus,
-        range: m.referenceRange
-      };
-    });
-  }, [report?.metrics]);
 
   return (
     <>
