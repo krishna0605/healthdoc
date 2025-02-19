@@ -261,61 +261,58 @@ async def analyze_report(request: AnalyzeRequest):
 
 
 def get_analysis_prompt() -> str:
-    return """Analyze this medical report/image and provide a detailed structured JSON response.
-    
-    1. **Identify the Report Type**:
-       - **RADIOLOGY**: STRICTLY for X-Rays, MRI, CT Scans, Ultrasounds, or any imaging reports.
-       - **LAB_REPORT**: For blood tests, urine tests, pathology, etc.
-       - **PRESCRIPTION**: For doctor's notes, medications, scripts.
-       - **PATHOLOGY**: For biopsy, tissue analysis.
-       - **OTHER**: If none of the above.
-       
-    2. **Generate Tags**: Create a list of 3-5 relevant tags (e.g., "MRI Knee", "Blood Test", "Lipid Panel", "Antibiotics", "Fracture").
-    
-    3. **Extraction**:
-       - **Lab Report**: Extract ALL test names, values, units, and reference ranges. Infer status (NORMAL/LOW/HIGH).
-       - **Prescription**: Extract medicine names, dosages, frequencies, and duration.
-       - **Radiology/Imaging**: Extract 'Impression', 'Findings', 'Technique', and 'Body Part'.
-    
-    4. **Detailed Analysis**:
-       - **Patient Summary**: A COMPREHENSIVE, plain-language explanation (minimum 3 paragraphs). Explain the medical terms, what the results indicate, and the overall health picture.
-       - **Predictions**: Based on the findings, list potential future risks, follow-up actions, or conditions to watch out for.
-       - **Disclaimer**: YOU MUST PREPEND "CAUTION: AI PREDICTION" to any prediction.
+    return """Analyze this medical report/image and return a JSON object.
 
-    Return a JSON object with this EXACT structure:
+    1. **Identify the Report Type (CRITICAL)**:
+       - **RADIOLOGY**: STRICTLY if the file is an X-Ray, MRI, CT Scan, Ultrasound, PET Scan, or contains terms like "Impression", "Technique", "Views".
+       - **LAB_REPORT**: For blood tests, lipid panels, liver function, urine analysis.
+       - **PRESCRIPTION**: Doctor's handwritten or printed medication list.
+       - **PATHOLOGY**: Tissue biopsy results.
+       - **OTHER**: Only if it clearly doesn't fit the above.
+
+    2. **Generate Tags**: 
+       - If RADIOLOGY: Generate 3-5 tags describing the scan (e.g., "MRI Brain", "CT Abdomen", "X-Ray Chest", "Fracture", "Normal").
+       - If LAB: Tags for the panel (e.g., "CBC", "Lipid Panel", "Thyroid").
+
+    3. **Extraction Rules**:
+       - **RADIOLOGY**: Extract 'Impression', 'Findings', 'Technique', 'Body Part'. If image text is blurry, infer from visible headers.
+       - **LAB**: Extract ALL table values.
+    
+    4. **Detailed Analysis (MANDATORY)**:
+       - **Patient Summary**: Write a COMPREHENSIVE, plain-language summary in **minimum 3 detailed paragraphs**.
+         - Para 1: What test was done and why (context).
+         - Para 2: Detailed explanation of the findings (what is normal, what isn't).
+         - Para 3: Overall conclusion and health implications.
+       - **Predictions**: You MUST generate at least 3 distinct "AI Predictions" or future risks based on these results.
+         - Format: "CAUTION: AI PREDICTION - [Prediction details]"
+         - Example: "CAUTION: AI PREDICTION - Risk of Vitamin D deficiency related bone loss if uncorrected."
+
+    Return this EXACT JSON structure:
     {
-      "patient_name": "Name or Unknown",
-      "lab_name": "Lab/Hospital Name or Unknown",
-      "report_date": "YYYY-MM-DD or null",
-      "report_type": "LAB_REPORT",
-      "tags": ["Tag1", "Tag2"],
-      "report_description": "Brief description of the report type.",
-      "extracted_text": "Full text content of the report.",
-      "patient_summary": "Detailed plain-language summary (3+ paragraphs).",
-      "clinical_summary": "Technical summary for a doctor.",
-      "key_findings": ["Finding 1", "Finding 2"],
-      "predictions": ["CAUTION: AI PREDICTION - Risk of X...", "CAUTION: AI PREDICTION - Suggestion Y..."],
+      "patient_name": "Name",
+      "lab_name": "Lab Name",
+      "report_date": "YYYY-MM-DD",
+      "report_type": "RADIOLOGY|LAB_REPORT|PRESCRIPTION|etc",
+      "tags": ["MRI", "Brain", "Contrast"],
+      "report_description": "A detailed description of the document type and visual appearance.",
+      "extracted_text": "Full extracted text.",
+      "patient_summary": "Para 1...\n\nPara 2...\n\nPara 3...",
+      "clinical_summary": "Technical doctor-facing summary.",
+      "key_findings": ["Finding 1", "Finding 2", "Finding 3", "Finding 4"],
+      "predictions": [
+          "CAUTION: AI PREDICTION - ...",
+          "CAUTION: AI PREDICTION - ...",
+          "CAUTION: AI PREDICTION - ..."
+      ],
       "metrics": [
-        {
-          "name": "Hemoglobin",
-          "value": 14.2,
-          "unit": "g/dL",
-          "standard_range": "13.5 - 17.5 g/dL",
-          "status": "NORMAL",
-          "category": "Hematology"
-        }
+        { "name": "Test Name", "value": 0.0, "unit": "unit", "standard_range": "range", "status": "NORMAL/HIGH/LOW", "category": "Category" }
       ],
       "abnormalities": [
-        {
-          "metricName": "Vitamin D",
-          "severity": "MODERATE",
-          "description": "Vitamin D is lower than normal.",
-          "clinicalContext": "Low Vitamin D can lead to bone weakness."
-        }
+        { "metricName": "Name", "severity": "MODERATE", "description": "Explanation", "clinicalContext": "Context" }
       ]
     }
     
-    IMPORTANT: 
-    - If it's an image (MRI/CT), describe the visual findings in detail in 'report_description'.
-    - Do not hallucinate values.
-    - Return ONLY the JSON object."""
+    IMPORTANT:
+    - Never return an empty "predictions" array. Infer general health advice if no specific risks are present.
+    - If unsure of values, do not halluncinate.
+    - Return ONLY valid JSON."""

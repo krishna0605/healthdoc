@@ -324,7 +324,15 @@ export async function reportRoutes(fastify: FastifyInstance) {
 
       // If AI service returns error, use fallback
       if (!response.ok) {
-        console.log(`[Query] AI service returned ${response.status}, using fallback`)
+        const errorText = await response.text();
+        console.error(`[Query] AI service returned ${response.status}: ${errorText}`)
+        
+        // Try to parse error details
+        try {
+            const errJson = JSON.parse(errorText);
+            if (errJson.detail) console.error(`[Query] Details: ${errJson.detail}`);
+        } catch (e) {}
+
         const fallback = generateFallbackResponse(report, question)
         result = fallback.data
       } else {
