@@ -270,22 +270,23 @@ def get_analysis_prompt() -> str:
        - **PATHOLOGY**: Tissue biopsy results.
        - **OTHER**: Only if it clearly doesn't fit the above.
 
-    2. **Generate Tags**: 
-       - If RADIOLOGY: Generate 3-5 tags describing the scan (e.g., "MRI Brain", "CT Abdomen", "X-Ray Chest", "Fracture", "Normal").
-       - If LAB: Tags for the panel (e.g., "CBC", "Lipid Panel", "Thyroid").
+    2. **Generate Tags (MANDATORY)**: 
+       - Generate at least 3-5 tags describing the scan or test.
+       - Examples: "MRI Brain", "CT Abdomen", "X-Ray Chest", "Fracture", "Normal", "CBC", "Lipid Panel", "Thyroid", "High Cholesterol".
 
     3. **Extraction Rules**:
        - **RADIOLOGY**: Extract 'Impression', 'Findings', 'Technique', 'Body Part'. If image text is blurry, infer from visible headers.
        - **LAB**: Extract ALL table values.
     
-    4. **Detailed Analysis (MANDATORY)**:
-       - **Patient Summary**: Write a COMPREHENSIVE, plain-language summary in **minimum 3 detailed paragraphs**.
-         - Para 1: What test was done and why (context).
-         - Para 2: Detailed explanation of the findings (what is normal, what isn't).
-         - Para 3: Overall conclusion and health implications.
-       - **Predictions**: You MUST generate at least 3 distinct "AI Predictions" or future risks based on these results.
+    4. **Detailed Analysis (EXTREMELY IMPORTANT)**:
+       - **Patient Summary**: Write a **COMPREHENSIVE, detailed summary** in **minimum 3 full paragraphs**.
+         - Para 1: Explain exactly what test was performed, the reason (if visible), and the body part/system involved.
+         - Para 2: Detail every major finding. Explain complex medical terms in simple language. clearly state if results are normal or abnormal.
+         - Para 3: Provide an overall conclusion, potential next steps, and health implications.
+       - **Predictions**: You **MUST** generate at least 3 distinct "AI Predictions" or future risks based on these results.
          - Format: "CAUTION: AI PREDICTION - [Prediction details]"
          - Example: "CAUTION: AI PREDICTION - Risk of Vitamin D deficiency related bone loss if uncorrected."
+         - If findings are normal, predict "Continued good health with maintenance of current lifestyle" etc.
 
     Return this EXACT JSON structure:
     {
@@ -293,10 +294,10 @@ def get_analysis_prompt() -> str:
       "lab_name": "Lab Name",
       "report_date": "YYYY-MM-DD",
       "report_type": "RADIOLOGY|LAB_REPORT|PRESCRIPTION|etc",
-      "tags": ["MRI", "Brain", "Contrast"],
+      "tags": ["Tag1", "Tag2", "Tag3"],
       "report_description": "A detailed description of the document type and visual appearance.",
-      "extracted_text": "Full extracted text.",
-      "patient_summary": "Para 1...\n\nPara 2...\n\nPara 3...",
+      "extracted_text": "Full extracted text from the document (transcribe everything visible).",
+      "patient_summary": "Para 1 content...\n\nPara 2 content...\n\nPara 3 content...",
       "clinical_summary": "Technical doctor-facing summary.",
       "key_findings": ["Finding 1", "Finding 2", "Finding 3", "Finding 4"],
       "predictions": [
@@ -313,6 +314,7 @@ def get_analysis_prompt() -> str:
     }
     
     IMPORTANT:
-    - Never return an empty "predictions" array. Infer general health advice if no specific risks are present.
-    - If unsure of values, do not halluncinate.
+    - **Tags, predictions, and report_type are REQUIRED**.
+    - **patient_summary MUST be long and detailed (300+ words).**
+    - Do not hallucinate values.
     - Return ONLY valid JSON."""

@@ -524,6 +524,17 @@ export default function ReportDetailPage() {
               </div>
             </div>
             
+            {/* Tags Section */}
+            {report.analysis?.tags && report.analysis.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {report.analysis.tags.map((tag, i) => (
+                  <span key={i} className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold border border-blue-100 dark:border-blue-800">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            
             {/* Description */}
             <div className="p-6 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/10">
               <h4 className="font-bold mb-3 dark:text-white">About This Report</h4>
