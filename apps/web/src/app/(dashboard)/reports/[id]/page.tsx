@@ -197,13 +197,18 @@ export default function ReportDetailPage() {
   }
 
   // Parse metrics for display
-  const metrics = (report.metrics || []).map(m => ({
-    name: m.name,
-    value: String(m.value),
-    unit: m.unit,
-    status: (m.status?.toLowerCase() || 'normal') as 'normal' | 'high' | 'low',
-    range: m.referenceRange
-  }));
+  const metrics = React.useMemo(() => {
+    return (report?.metrics || []).map((m) => {
+      const normalizedStatus = (m.status?.toLowerCase() || 'normal') as 'normal' | 'high' | 'low';
+      return {
+        name: m.name,
+        value: String(m.value),
+        unit: m.unit,
+        status: normalizedStatus,
+        range: m.referenceRange
+      };
+    });
+  }, [report?.metrics]);
 
   return (
     <>
@@ -602,6 +607,8 @@ export default function ReportDetailPage() {
               </div>
             </div>
           )}
+        </div>
+
         </div>
 
         {/* Right Column (Chat Assistant) */}
