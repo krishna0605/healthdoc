@@ -19,6 +19,10 @@ router = APIRouter()
 # Setup Supabase
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+    raise RuntimeError("SUPABASE_URL or SUPABASE_SERVICE_KEY is missing from environment variables.")
+
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # Setup OpenAI
@@ -105,6 +109,7 @@ async def analyze_report(request: AnalyzeRequest):
 
         # 2. Determine file type and extract content
         ext = request.file_path.split('.')[-1].lower()
+        content_text = ""  # Initialize to avoid unbound variable error
         
         # Prepare messages
         messages = [
@@ -116,6 +121,7 @@ async def analyze_report(request: AnalyzeRequest):
         
         # For images, use vision capability
         if ext in ['png', 'jpg', 'jpeg']:
+            content_text = f"[Image Analysis Request] File: {request.file_path}"
             mime_type = f"image/{ext.replace('jpg', 'jpeg')}"
             base64_image = base64.b64encode(file_data).decode('utf-8')
             

@@ -59,6 +59,8 @@ const start = async () => {
     const port = parseInt(process.env.PORT || '3001')
     await fastify.listen({ port, host: '0.0.0.0' })
     console.log(`🚀 API Gateway running on http://localhost:${port}`)
+    console.log(`🛡️ CORS Origin: ${process.env.CORS_ORIGIN}`)
+    console.log(`🤖 AI Service: ${process.env.AI_SERVICE_URL}`)
   } catch (err) {
     fastify.log.error(err)
     process.exit(1)

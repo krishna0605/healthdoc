@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/client'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+if (typeof window !== 'undefined') {
+  console.log('🔌 API Configured at:', API_URL)
+}
 
 /**
  * Get the current user's auth token from Supabase session
