@@ -19,6 +19,11 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 
+if not SUPABASE_SERVICE_KEY:
+    print("⚠️ WARNING: SUPABASE_SERVICE_KEY is missing/empty! Supabase queries may fail with permission errors.")
+else:
+    print(f"🔑 SUPABASE_SERVICE_KEY loaded (length: {len(str(SUPABASE_SERVICE_KEY))})")
+
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -79,7 +84,7 @@ async def ask_question(request: QueryRequest):
             )
         
         # Limit text length for API
-        context = extracted_text[:8000]  # First 8K chars
+        context = extracted_text[:20000]  # Increased to 20K chars for better answers
         
         print(f"📝 Using {len(context)} chars of context")
         

@@ -19,11 +19,19 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
-qdrant_client = QdrantClient(url=QDRANT_URL)
+
+
+# Handle Qdrant connection (Remote or Local)
+if QDRANT_URL and "localhost" not in QDRANT_URL and QDRANT_URL.startswith("http"):
+    qdrant_client = QdrantClient(url=QDRANT_URL)
+else:
+    # Use local file storage if URL is not an HTTP endpoint
+    # This enables running in single-container environments (like HF Spaces)
+    qdrant_client = QdrantClient(path=QDRANT_URL or "qdrant_data")
 
 # Collection name for report embeddings
 COLLECTION_NAME = "report_chunks"
-EMBEDDING_MODEL = "text-embedding-3-small"
+EMBEDDING_MODEL = "text-embedding-ada-002"
 EMBEDDING_DIMENSION = 1536
 
 

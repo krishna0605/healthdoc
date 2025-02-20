@@ -164,7 +164,7 @@ async def analyze_report(request: AnalyzeRequest):
                     model=MODEL,
                     messages=messages,
                     temperature=0.1,
-                    max_tokens=4000,
+                    max_tokens=8000,
                 )
                 response_text = response.choices[0].message.content
                 break
@@ -185,16 +185,23 @@ async def analyze_report(request: AnalyzeRequest):
         
         # 4. Parse Response
         try:
-            text = response_text.replace("```json", "").replace("```", "").strip()
-            # Handle potential markdown artifacts
-            if "{" not in text: 
-                 raise ValueError("Response does not contain JSON")
+            import re
+            # Clean up the response text (remove markdown code blocks if present)
+            cleaned_text = response_text.strip()
+            if cleaned_text.startswith("```json"):
+                cleaned_text = cleaned_text[7:]
+            if cleaned_text.startswith("```"):
+                cleaned_text = cleaned_text[3:]
+            if cleaned_text.endswith("```"):
+                cleaned_text = cleaned_text[:-3]
+            cleaned_text = cleaned_text.strip()
             
-            # Find the first { and last }
-            start = text.find("{")
-            end = text.rfind("}") + 1
-            json_str = text[start:end]
+            # Extract JSON using regex (find the outermost logical JSON object)
+            json_match = re.search(r"\{[\s\S]*\}", cleaned_text)
+            if not json_match:
+                 raise ValueError("Response does not contain valid JSON structure")
             
+            json_str = json_match.group(0)
             data = json.loads(json_str)
         except Exception as e:
             print(f"JSON Parse Error: {response_text}")
@@ -241,7 +248,7 @@ async def analyze_report(request: AnalyzeRequest):
             report_description=data.get("report_description"),
             report_type=data.get("report_type", "LAB_REPORT"),
             tags=data.get("tags", []),
-            extracted_text=str(data.get("extracted_text", ""))[:1500],
+            extracted_text=content_text[:20000],  # Increased limit for better RAG context
             patient_summary=data.get("patient_summary", "No summary available"),
             clinical_summary=data.get("clinical_summary", "No summary available"),
             key_findings=data.get("key_findings", []),
@@ -276,7 +283,10 @@ def get_analysis_prompt() -> str:
 
     3. **Extraction Rules**:
        - **RADIOLOGY**: Extract 'Impression', 'Findings', 'Technique', 'Body Part'. If image text is blurry, infer from visible headers.
-       - **LAB**: Extract ALL table values.
+       - **LAB**: Extract **EVERY SINGLE ROW** from table. **DO NOT SUMMARIZE**.
+         - **MUST INCLUDE**: All sub-parameters like Neutrophils %, Lymphocytes %, Monocytes %, Eosinophils %, Basophils %, RBC Count, PCV/HCT, MCV, MCH, MCHC, RDW, Platelet Count, MPV, etc.
+         - **CRITICAL**: Capture the **Reference Range** (or 'Normal Range', 'Bio. Ref. Interval') for EVERY metric into the `standard_range` field. If the report lists a range (e.g., "13.5-17.5" or "< 200"), you MUST extract it.
+         - Capture both the Value and the Unit separately.
     
     4. **Detailed Analysis (EXTREMELY IMPORTANT)**:
        - **Patient Summary**: Write a **COMPREHENSIVE, detailed summary** in **minimum 3 full paragraphs**.
@@ -296,7 +306,6 @@ def get_analysis_prompt() -> str:
       "report_type": "RADIOLOGY|LAB_REPORT|PRESCRIPTION|etc",
       "tags": ["Tag1", "Tag2", "Tag3"],
       "report_description": "A detailed description of the document type and visual appearance.",
-      "extracted_text": "Full extracted text from the document (transcribe everything visible).",
       "patient_summary": "Para 1 content...\n\nPara 2 content...\n\nPara 3 content...",
       "clinical_summary": "Technical doctor-facing summary.",
       "key_findings": ["Finding 1", "Finding 2", "Finding 3", "Finding 4"],
