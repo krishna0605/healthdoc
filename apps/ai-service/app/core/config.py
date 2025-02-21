@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
     
     # Model settings
-    EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
+    EMBEDDING_MODEL: str = "text-embedding-3-small"
     CHUNK_SIZE: int = 500
     CHUNK_OVERLAP: int = 50
     

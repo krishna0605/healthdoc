@@ -217,19 +217,51 @@ async def analyze_report(request: AnalyzeRequest):
         raw_metrics = data.get("metrics", [])
         valid_metrics = []
         for m in raw_metrics:
-            if m and m.get("name") and m.get("value") is not None and m.get("unit"):
-                try:
-                    valid_metrics.append({
-                        "name": str(m["name"]),
-                        "value": float(m["value"]),
-                        "unit": str(m["unit"]),
-                        "standard_range": str(m.get("standard_range", "")),
-                        "status": str(m.get("status", "NORMAL")).upper(),
-                        "category": str(m.get("category", "")) if m.get("category") else None
-                    })
-                except (ValueError, TypeError):
-                    print(f"⚠️ Skipping invalid metric: {m}")
-                    continue
+                # Sanitize value
+                raw_val = m.get("value")
+                cleaned_val = None
+                
+                if isinstance(raw_val, (int, float)):
+                    cleaned_val = float(raw_val)
+                elif isinstance(raw_val, str):
+                    # Remove common non-numeric chars but keep separators
+                    # Handle < and >
+                    val_str = raw_val.replace("<", "").replace(">", "").strip()
+                    # Handle ranges like "4.0-5.6" by taking average
+                    if "-" in val_str:
+                        try:
+                            parts = val_str.split("-")
+                            if len(parts) == 2:
+                                cleaned_val = (float(parts[0]) + float(parts[1])) / 2
+                        except:
+                            pass
+                    
+                    if cleaned_val is None:
+                        # Try simple float conversion (removes other text)
+                        import re
+                        # Extract first number found
+                        match = re.search(r"[-+]?\d*\.\d+|\d+", val_str)
+                        if match:
+                            cleaned_val = float(match.group())
+
+                if cleaned_val is not None:
+                    try:
+                        valid_metrics.append({
+                            "name": str(m["name"]),
+                            "value": cleaned_val, # Use our cleaned float
+                            "unit": str(m["unit"]),
+                            "standard_range": str(m.get("standard_range", "")),
+                            "status": str(m.get("status", "NORMAL")).upper(),
+                            "category": str(m.get("category", "")) if m.get("category") else None,
+                            # Store original raw value in extractedText for reference if needed
+                            "extractedText": str(raw_val)
+                        })
+                    except (ValueError, TypeError) as e:
+                         print(f"⚠️ Skipping invalid metric after cleanup: {m} - {e}")
+                         continue
+                else:
+                     print(f"⚠️ Could not parse value from: {m}")
+                     continue
         
         # Filter and validate abnormalities
         raw_abnormalities = data.get("abnormalities", [])

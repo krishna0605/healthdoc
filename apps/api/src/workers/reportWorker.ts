@@ -245,7 +245,7 @@ export const initReportWorker = () => {
     }
   }, { 
     connection,
-    concurrency: 2 // Process 2 reports at a time
+    concurrency: 1 // Process 1 report at a time to comply with OpenAI rate limits
   })
 
   worker.on('completed', job => {

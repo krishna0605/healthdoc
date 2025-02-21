@@ -29,9 +29,11 @@ else:
     # This enables running in single-container environments (like HF Spaces)
     qdrant_client = QdrantClient(path=QDRANT_URL or "qdrant_data")
 
+from app.core.config import settings
+
 # Collection name for report embeddings
 COLLECTION_NAME = "report_chunks"
-EMBEDDING_MODEL = "text-embedding-ada-002"
+EMBEDDING_MODEL = settings.EMBEDDING_MODEL
 EMBEDDING_DIMENSION = 1536
 
 
