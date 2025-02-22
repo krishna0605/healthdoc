@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/client'
 
-const getBaseUrl = () => {
+export const getBaseUrl = () => {
   const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
   if (url.startsWith('http')) return url
   return `https://${url}`
 }
 
-const API_URL = getBaseUrl()
+export const API_URL = getBaseUrl()
 if (typeof window !== 'undefined') {
   console.log('🔌 API Configured at:', API_URL)
 }

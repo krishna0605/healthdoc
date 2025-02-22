@@ -6,6 +6,7 @@ import { Upload, FileText, X, Loader2, CheckCircle, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
+import { API_URL } from '@/lib/api' 
 import { useFamilyContext } from '@/components/family'
 
 interface ReportUploaderProps {
@@ -76,9 +77,7 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
       setProgress(60)
 
       // 2. Call API to create record
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-      
-      const response = await fetch(`${apiUrl}/api/reports`, {
+      const response = await fetch(`${API_URL}/api/reports`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

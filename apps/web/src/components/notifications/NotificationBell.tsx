@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { API_URL } from '@/lib/api' 
 import { Bell, X, CheckCheck, FileText, AlertTriangle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -29,7 +30,7 @@ export function NotificationBell() {
       if (!session) return
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/user/notifications`,
+        `${API_URL}/api/user/notifications`,
         {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         }
@@ -58,7 +59,7 @@ export function NotificationBell() {
       if (!session) return
 
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/user/notifications/${id}/read`,
+        `${API_URL}/api/user/notifications/${id}/read`,
         {
           method: 'PUT',
           headers: { 'Authorization': `Bearer ${session.access_token}` }
@@ -80,7 +81,7 @@ export function NotificationBell() {
       if (!session) return
 
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/user/notifications/read-all`,
+        `${API_URL}/api/user/notifications/read-all`,
         {
           method: 'PUT',
           headers: { 'Authorization': `Bearer ${session.access_token}` }

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { API_URL } from '@/lib/api' 
 import { Send, Loader2 } from 'lucide-react'
 
 export interface ChatMessage {
@@ -46,11 +47,11 @@ export function ReportChat({ reportId, onMessagesChange }: ReportChatProps) {
         // Fetch suggestions and history in parallel
         const [suggestionsRes, historyRes] = await Promise.all([
           fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/reports/${reportId}/suggestions`,
+            `${API_URL}/api/reports/${reportId}/suggestions`,
             { headers }
           ),
           fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/reports/${reportId}/history`,
+            `${API_URL}/api/reports/${reportId}/history`,
             { headers }
           )
         ])
@@ -87,7 +88,7 @@ export function ReportChat({ reportId, onMessagesChange }: ReportChatProps) {
       if (!session) throw new Error('Not authenticated')
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/reports/${reportId}/query`,
+        `${API_URL}/api/reports/${reportId}/query`,
         {
           method: 'POST',
           headers: {
