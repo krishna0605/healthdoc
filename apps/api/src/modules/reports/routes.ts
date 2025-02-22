@@ -249,7 +249,11 @@ export async function reportRoutes(fastify: FastifyInstance) {
 
     // Verify report ownership
     const report = await prisma.report.findFirst({
-      where: { id, userId: user.id }
+      where: { id, userId: user.id },
+      include: {
+        analysis: true,
+        metrics: true
+      }
     })
 
     if (!report) {
