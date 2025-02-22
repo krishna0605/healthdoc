@@ -139,7 +139,7 @@ export function NotificationBell() {
           {/* Dropdown */}
           <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
             {/* Header */}
-            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-750">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-900">
               <h3 className="font-bold text-gray-900 dark:text-white">Notifications</h3>
               {unreadCount > 0 && (
                 <button 
@@ -165,7 +165,7 @@ export function NotificationBell() {
                   <button
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
-                    className={`w-full p-4 text-left border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors flex gap-3 ${
+                    className={`w-full p-4 text-left border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex gap-3 ${
                       !notification.isRead ? 'bg-primary/5 dark:bg-primary/10' : ''
                     }`}
                   >
