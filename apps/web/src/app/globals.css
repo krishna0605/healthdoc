@@ -10,16 +10,16 @@
 
 /* Define theme colors that work with Tailwind utilities */
 @theme {
-  /* Primary brand color */
-  --color-primary: #2e7c9e;
+  /* Primary brand color - Modern Sky/Cyan */
+  --color-primary: #0ea5e9;
   
   /* Background colors */
-  --color-background-light: #f8f7f7;
-  --color-background-dark: #22262a;
+  --color-background-light: #f8fafc; /* Cool gray 50 */
+  --color-background-dark: #0f172a; /* Slate 900 */
   
   /* Text colors */
-  --color-text-main: #101619;
-  --color-text-muted: #5a7d8c;
+  --color-text-main: #0f172a;
+  --color-text-muted: #64748b;
   
   /* Fonts */
   --font-display: "Epilogue", sans-serif;
@@ -31,15 +31,15 @@
 
 /* Root variables for dynamic theming */
 :root {
-  --primary: #2e7c9e;
-  --primary-hover: #256b89;
-  --background: #f8f7f7;
-  --foreground: #101619;
+  --primary: #0ea5e9;
+  --primary-hover: #0284c7;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
 .dark {
-  --background: #22262a;
-  --foreground: #f1f5f9;
+  --background: #0f172a;
+  --foreground: #f8fafc;
 }
 
 /* Base body styles */
@@ -56,14 +56,14 @@ body {
 
 /* Pulse soft animation for buttons */
 .pulse-soft {
-  box-shadow: 0 0 0 0 rgba(46, 124, 158, 0.4);
+  box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4);
   animation: pulse-animation 3s infinite;
 }
 
 @keyframes pulse-animation {
-  0% { box-shadow: 0 0 0 0 rgba(46, 124, 158, 0.4); }
-  70% { box-shadow: 0 0 0 20px rgba(46, 124, 158, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(46, 124, 158, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4); }
+  70% { box-shadow: 0 0 0 20px rgba(14, 165, 233, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
 }
 
 /* Shimmer animation for loading states */
@@ -96,9 +96,10 @@ body {
    ============================ */
 
 .glass {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .dark .glass {
