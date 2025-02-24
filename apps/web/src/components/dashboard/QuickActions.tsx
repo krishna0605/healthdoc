@@ -24,14 +24,6 @@ const actions: QuickActionProps[] = [
     desc: 'Add new medical docs'
   },
   { 
-    icon: <MapPin className="w-6 h-6" />, 
-    label: 'Find Services', 
-    href: '/maps', 
-    color: 'text-emerald-500',
-    bgOpacity: 'bg-emerald-500/10',
-    desc: 'Locate nearby care'
-  },
-  { 
     icon: <Users className="w-6 h-6" />, 
     label: 'Family Profile', 
     href: '/family', 
@@ -73,7 +65,7 @@ export function QuickActions() {
       variants={container}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+      className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8"
     >
       {actions.map((action, index) => (
         <Link 
