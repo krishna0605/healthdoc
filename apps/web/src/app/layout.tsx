@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Epilogue } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/react";
 
 const epilogue = Epilogue({ 
   subsets: ["latin"],
@@ -48,6 +49,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-background-light dark:bg-background-dark font-display text-text-main dark:text-gray-100 antialiased selection:bg-primary/20 transition-colors duration-300">
         {children}
+        <Analytics />
       </body>
     </html>
   );
