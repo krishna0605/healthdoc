@@ -28,9 +28,9 @@ export const Navbar: React.FC = () => {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-10">
-          <a className="text-sm font-medium text-text-main dark:text-gray-300 hover:text-primary transition-colors" href="#">Platform</a>
-          <a className="text-sm font-medium text-text-main dark:text-gray-300 hover:text-primary transition-colors" href="#">Privacy</a>
-          <a className="text-sm font-medium text-text-main dark:text-gray-300 hover:text-primary transition-colors" href="#">Enterprise</a>
+          <a className="text-sm font-medium text-text-main dark:text-gray-300 hover:text-primary transition-colors" href="/#features">Features</a>
+          <Link className="text-sm font-medium text-text-main dark:text-gray-300 hover:text-primary transition-colors" href="/pricing">Pricing</Link>
+          <Link className="text-sm font-medium text-text-main dark:text-gray-300 hover:text-primary transition-colors" href="/about">About</Link>
         </div>
         <div className="hidden md:flex items-center gap-4">
           <ThemeToggle />
