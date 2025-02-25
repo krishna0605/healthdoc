@@ -4,6 +4,8 @@ import { Marquee } from '@/components/marketing/Marquee';
 import { FeatureOne } from '@/components/marketing/FeatureOne';
 import { FeatureTwo } from '@/components/marketing/FeatureTwo';
 import { FeaturesCarousel } from '@/components/marketing/FeaturesCarousel';
+import { PricingSection } from '@/components/marketing/PricingSection';
+import { FAQSection } from '@/components/marketing/FAQSection';
 import { CallToAction } from '@/components/marketing/CallToAction';
 import { Footer } from '@/components/layout/Footer';
 
@@ -17,6 +19,8 @@ export default function Home() {
         <FeatureOne />
         <FeatureTwo />
         <FeaturesCarousel />
+        <PricingSection />
+        <FAQSection />
         <CallToAction />
       </main>
       <Footer />

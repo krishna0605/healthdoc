@@ -46,7 +46,10 @@ export const initReportWorker = () => {
       
       const response = await fetch(analyzeUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-internal-api-key': process.env.INTERNAL_API_KEY || 'secure_dev_key_123'
+        },
         body: JSON.stringify({
           report_id: reportId,
           file_path: filePath, // Use filePath for internal download
@@ -127,7 +130,10 @@ export const initReportWorker = () => {
         console.log(`[Worker] Generating embeddings for report ${reportId}...`)
         const embedResponse = await fetch(`${PYTHON_SERVICE_URL}/api/embeddings/generate`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-internal-api-key': process.env.INTERNAL_API_KEY || 'secure_dev_key_123'
+          },
           body: JSON.stringify({
             report_id: reportId,
             user_id: userId,

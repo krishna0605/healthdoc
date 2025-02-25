@@ -316,7 +316,10 @@ export async function reportRoutes(fastify: FastifyInstance) {
       // Call AI service query endpoint
       const response = await fetch(`${AI_SERVICE_URL}/api/query/ask`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-internal-api-key': process.env.INTERNAL_API_KEY || 'secure_dev_key_123'
+        },
         body: JSON.stringify({
           report_id: id,
           user_id: user.id,
@@ -482,7 +485,11 @@ export async function reportRoutes(fastify: FastifyInstance) {
     }
 
     try {
-      const response = await fetch(`${AI_SERVICE_URL}/api/query/suggestions/${id}`)
+      const response = await fetch(`${AI_SERVICE_URL}/api/query/suggestions/${id}`, {
+         headers: {
+            'x-internal-api-key': process.env.INTERNAL_API_KEY || 'secure_dev_key_123'
+         }
+      })
       const result = await response.json()
       return { data: result }
     } catch (error) {
