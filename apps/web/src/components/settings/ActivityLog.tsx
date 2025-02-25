@@ -77,13 +77,16 @@ export function ActivityLog() {
           }
         });
 
-        if (!res.ok) throw new Error('Failed to fetch logs');
+        if (!res.ok) {
+           const text = await res.text();
+           throw new Error(`Error ${res.status}: ${text || 'Unknown error'}`);
+        }
 
         const data = await res.json();
         setLogs(data.data.logs || []);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load activity logs');
+      } catch (err: any) {
+        console.error('Fetch logs error:', err);
+        setError(err.message || 'Failed to load activity logs');
       } finally {
         setLoading(false);
       }
