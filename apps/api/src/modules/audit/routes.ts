@@ -50,4 +50,26 @@ export async function auditRoutes(fastify: FastifyInstance) {
       reply.code(500).send({ error: error.message })
     }
   })
+  // Log an event from the client
+  fastify.post('/log', async (request: any, reply) => {
+    const { action, metadata } = request.body as { action: string; metadata?: any }
+    
+    if (!action) {
+      reply.code(400).send({ error: 'Action is required' })
+      return
+    }
+
+    // Call service (cast action to any to allow string usage, validation happens in DB or service if strict)
+    // In a real app we'd validate against AuditActions enum
+    const { logAuditEvent } = await import('../../lib/auditService.js')
+    
+    await logAuditEvent({
+        userId: request.user.id,
+        action: action as any,
+        metadata,
+        request
+    })
+
+    return { success: true }
+  })
 }

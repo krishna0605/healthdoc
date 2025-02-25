@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/api'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 // HealthDoc Logo SVG
@@ -79,6 +80,9 @@ export default function RegisterPage() {
 
       router.push('/dashboard')
       router.refresh()
+      
+      // Log event (non-blocking)
+      api.logEvent('LOGIN', { method: 'register' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create account')
     } finally {

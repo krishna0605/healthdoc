@@ -766,6 +766,15 @@ export async function reportRoutes(fastify: FastifyInstance) {
         }
       })
 
+      // Log Audit Event
+      await logAuditEvent({
+        userId: user.id,
+        action: AuditActions.REPORT_SHARE,
+        resource: 'share_link',
+        resourceId: shareLink.id,
+        request
+      })
+
       return {
         data: {
           token: shareLink.token,

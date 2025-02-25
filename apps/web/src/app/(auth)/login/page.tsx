@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/api'
 // import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -70,6 +71,9 @@ function LoginForm() {
       })
 
       if (error) throw error
+
+      // Log successful login
+      await api.logEvent('LOGIN')
 
       router.push(redirectTo)
       router.refresh()

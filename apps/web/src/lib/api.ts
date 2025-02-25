@@ -145,4 +145,11 @@ export const api = {
       return { data: null as any, error: error.message || 'Network error' }
     }
   },
+
+  /**
+   * Log an activity event
+   */
+  async logEvent(action: string, metadata?: Record<string, any>) {
+    return this.post('/api/audit/log', { action, metadata })
+  }
 }
