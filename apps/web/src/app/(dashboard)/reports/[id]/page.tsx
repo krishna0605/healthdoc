@@ -244,150 +244,271 @@ export default function ReportDetailPage() {
             <button 
               onClick={async () => {
                 const { jsPDF } = await import('jspdf');
+                const autoTable = (await import('jspdf-autotable')).default;
+                
                 const doc = new jsPDF();
                 
-                // Helper to strip markdown and sanitize text
+                // --- Helpers ---
                 const stripMarkdown = (text: string) => {
-                  return text
-                    .replace(/\*\*(.*?)\*\*/g, '$1') // Bold
-                    .replace(/\*(.*?)\*/g, '$1')     // Italic
-                    .replace(/__(.*?)__/g, '$1')     // Underline
-                    .replace(/`(.*?)`/g, '$1')       // Inline code
-                    .replace(/#+\s/g, '')            // Headers
-                    .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Links
-                    .replace(/[-*]\s/g, '• ')        // Lists
-                    .replace(/[^\x20-\x7E\n•]/g, '') // Remove non-printable/weird chars
+                  return (text || '')
+                    .replace(/\*\*(.*?)\*\*/g, '$1')
+                    .replace(/\*(.*?)\*/g, '$1')
+                    .replace(/__(.*?)__/g, '$1')
+                    .replace(/`(.*?)`/g, '$1')
+                    .replace(/#+\s/g, '')
+                    .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+                    .replace(/[-*]\s/g, '• ')
+                    .replace(/[^\x20-\x7E\n•]/g, '')
                     .trim();
                 };
 
-                // --- Blue Banner Header ---
-                doc.setFillColor(59, 130, 246); // Primary Blue (Tailwind blue-500 equivalent approx)
-                doc.rect(0, 0, 210, 40, 'F');
+                const addSectionHeader = (title: string, y: number) => {
+                   doc.setFillColor(240, 249, 255); // Light Blue bg
+                   doc.setDrawColor(59, 130, 246);  // Blue border
+                   doc.rect(14, y - 6, 182, 10, 'F');
+                   doc.rect(14, y - 6, 2, 10, 'F'); // Darker tab
+                   
+                   doc.setFontSize(12);
+                   doc.setTextColor(30, 58, 138); // Dark Blue
+                   doc.setFont('helvetica', 'bold');
+                   doc.text(title.toUpperCase(), 20, y);
+                   return y + 15;
+                };
+
+                // --- 1. Header & Branding ---
+                doc.setFillColor(59, 130, 246); 
+                doc.rect(0, 0, 210, 45, 'F');
                 
                 doc.setTextColor(255, 255, 255);
-                
-                // Patient Name (Left)
-                doc.setFontSize(14);
+                doc.setFontSize(22);
                 doc.setFont('helvetica', 'bold');
-                doc.text(stripMarkdown(report.analysis?.patientName || 'Patient'), 15, 20);
+                doc.text('HealthDoc', 15, 20);
                 
-                // Logo/Website Name (Center)
-                doc.setFontSize(24);
-                doc.setFont('helvetica', 'bold');
-                doc.text('HealthDoc', 105, 25, { align: 'center' });
-                
-                // Date & Age (Right)
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
-                const dateStr = formatDate(new Date().toISOString()); // Generated Date
-                const ageStr = report.analysis?.patientAge ? `Age: ${report.analysis.patientAge}` : '';
+                doc.text('AI-Powered Medical Analysis', 15, 26);
+
+                // Right side header info
+                doc.setFontSize(10);
+                const reportDate = formatDate(report.analysis?.reportDate || report.createdAt);
+                doc.text(`Report Date: ${reportDate}`, 195, 18, { align: 'right' });
+                doc.text(`Generated: ${new Date().toLocaleDateString()}`, 195, 24, { align: 'right' });
                 
-                doc.text(`Generated: ${dateStr}`, 195, 20, { align: 'right' });
-                if (ageStr) {
-                    doc.text(ageStr, 195, 26, { align: 'right' });
+                // Patient Info Box (Floating overlap)
+                doc.setFillColor(255, 255, 255);
+                doc.roundedRect(15, 35, 180, 25, 3, 3, 'F');
+                doc.setDrawColor(220, 220, 220);
+                doc.roundedRect(15, 35, 180, 25, 3, 3, 'S');
+                
+                doc.setTextColor(60, 60, 60);
+                doc.setFontSize(9);
+                doc.text('PATIENT', 25, 42);
+                doc.text('LABORATORY', 85, 42);
+                doc.text('SOURCE FILE', 145, 42);
+                
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.text(report.analysis?.patientName || 'Unknown Patient', 25, 50);
+                doc.text(report.analysis?.labName || 'Unknown Lab', 85, 50);
+                
+                const fileName = report.originalFileName.length > 25 
+                    ? report.originalFileName.substring(0, 22) + '...' 
+                    : report.originalFileName;
+                doc.text(fileName, 145, 50);
+
+                let yPos = 75;
+
+                // --- 2. Health Score & Breakdown ---
+                
+                // Health Score Circular-ish visual (Text representation)
+                // Health Score Circular-ish visual (Text representation)
+                doc.setFillColor(healthScore < 50 ? 239 : 59, 
+                                 healthScore < 50 ? 68 : 130, 
+                                 healthScore < 50 ? 68 : 246);
+                // Background for score
+                doc.roundedRect(15, yPos, 40, 30, 4, 4, 'F');
+                
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(8);
+                doc.text('HEALTH SCORE', 35, yPos + 8, { align: 'center' });
+                doc.setFontSize(22);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`${healthScore}/100`, 35, yPos + 20, { align: 'center' });
+
+                // Breakdown Bars (Right of score)
+                const startX = 65;
+                const barWidth = 120;
+                
+                const normalCount = metrics.filter(m => m.status === 'normal').length;
+                const highCount = metrics.filter(m => m.status === 'high').length;
+                const lowCount = metrics.filter(m => m.status === 'low').length;
+                const totalM = Math.max(metrics.length, 1);
+
+                // Normal Bar
+                doc.setFontSize(8);
+                doc.setTextColor(60, 60, 60);
+                doc.text(`Normal Values (${normalCount})`, startX, yPos + 5);
+                doc.setFillColor(229, 231, 235); // Gray bg
+                doc.rect(startX + 35, yPos + 2, barWidth - 35, 4, 'F');
+                doc.setFillColor(16, 185, 129); // Green
+                doc.rect(startX + 35, yPos + 2, ((barWidth - 35) * (normalCount / totalM)), 4, 'F');
+
+                // High Bar
+                doc.text(`High Values (${highCount})`, startX, yPos + 15);
+                doc.setFillColor(229, 231, 235);
+                doc.rect(startX + 35, yPos + 12, barWidth - 35, 4, 'F');
+                doc.setFillColor(245, 158, 11); // Orange
+                doc.rect(startX + 35, yPos + 12, ((barWidth - 35) * (highCount / totalM)), 4, 'F');
+
+                // Low Bar
+                doc.text(`Low Values (${lowCount})`, startX, yPos + 25);
+                doc.setFillColor(229, 231, 235);
+                doc.rect(startX + 35, yPos + 22, barWidth - 35, 4, 'F');
+                doc.setFillColor(239, 68, 68); // Red
+                doc.rect(startX + 35, yPos + 22, ((barWidth - 35) * (lowCount / totalM)), 4, 'F');
+
+                yPos += 45;
+
+                // --- 3. Report Summary ---
+                yPos = addSectionHeader('Report Summary', yPos);
+                
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(60, 60, 60);
+                
+                const summary = stripMarkdown(report.analysis?.patientSummary || report.analysis?.reportDescription || 'No summary available.');
+                const splitSummary = doc.splitTextToSize(summary, 180);
+                doc.text(splitSummary, 20, yPos);
+                yPos += (splitSummary.length * 5) + 8;
+
+                // Tags
+                if (report.analysis?.tags && report.analysis.tags.length > 0) {
+                   const tagsStr = report.analysis.tags.map((t: string) => `#${t}`).join(', ');
+                   doc.setFontSize(9);
+                   doc.setTextColor(100, 100, 100);
+                   doc.text(`TAGS: ${tagsStr}`, 20, yPos);
+                   yPos += 15;
                 }
 
-                
-                let yPos = 55;
-                
-                // --- Executive Summary ---
-                doc.setTextColor(33, 33, 33);
-                doc.setFontSize(16);
-                doc.setFont('helvetica', 'bold');
-                doc.text('Executive Summary', 20, yPos);
-                yPos += 10;
-                
-                doc.setFontSize(11);
-                doc.setTextColor(60, 60, 60);
-                doc.setFont('helvetica', 'normal');
-                
-                // Use the detailed summary or description
-                const rawSummary = report.analysis?.patientSummary || report.analysis?.reportDescription || 'No summary available.';
-                const summary = stripMarkdown(rawSummary);
-                const splitSummary = doc.splitTextToSize(summary, 170);
-                doc.text(splitSummary, 20, yPos);
-                
-                yPos += (splitSummary.length * 6) + 15;
-                
-                // --- Key Metrics ---
-                doc.setTextColor(33, 33, 33);
-                doc.setFontSize(18); // Slightly bigger for section header
-                doc.setFont('helvetica', 'bold');
-                doc.text('Key Metrics', 20, yPos);
-                yPos += 12;
-                
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'normal');
-                
-                const metrics = report.metrics || [];
-                // Simple list format for metrics
-                metrics.slice(0, 20).forEach((m: any) => { // Cast to any to avoid type issues in inline code, effectively ChatMessage logic is handled separately
-                  if (yPos > 270) {
-                    doc.addPage();
-                    yPos = 20;
-                  }
-                  
-                  // Clean layout using simple x coordinates
-                  const name = stripMarkdown(m.name.substring(0, 30));
-                  const value = stripMarkdown(`${m.value} ${m.unit}`);
-                  
-                  doc.setTextColor(0, 0, 0); // Black for name
-                  doc.text(name, 20, yPos);
-                  doc.text(value, 110, yPos);
-                  
-                  // Status
-                  if (m.status === 'HIGH') {
-                    doc.setTextColor(220, 38, 38); // Red
-                    doc.text(m.status, 160, yPos);
-                  } else if (m.status === 'LOW') {
-                    doc.setTextColor(37, 99, 235); // Blue
-                    doc.text(m.status, 160, yPos);
-                  } else {
-                    doc.setTextColor(22, 163, 74); // Green
-                    doc.text('NORMAL', 160, yPos);
-                  }
-                  
-                  yPos += 8;
-                });
-                
-                yPos += 15;
+                // --- 4. AI Predictions & Key Findings ---
+                if (yPos > 240) { doc.addPage(); yPos = 30; }
 
-                // --- Chat History ---
-                if (chatMessages.length > 0) {
-                    if (yPos > 250) {
-                        doc.addPage();
-                        yPos = 20;
-                    } 
+                // AI Predictions Box
+                if (report.analysis?.predictions && report.analysis.predictions.length > 0) {
+                    doc.setFillColor(255, 251, 235); // Amber-50
+                    doc.setDrawColor(252, 211, 77); // Amber-300
+                    doc.roundedRect(15, yPos, 180, (report.analysis.predictions.length * 8) + 15, 3, 3, 'FD');
                     
-                    doc.setTextColor(33, 33, 33);
-                    doc.setFontSize(16);
+                    doc.setTextColor(180, 83, 9); // Amber-800
+                    doc.setFontSize(11);
                     doc.setFont('helvetica', 'bold');
-                    doc.text('AI Consultation History', 20, yPos);
-                    yPos += 15;
+                    doc.text('AI Health Predictions', 25, yPos + 8);
                     
                     doc.setFontSize(10);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(146, 64, 14); // Amber-900
                     
-                    chatMessages.forEach(msg => {
-                        if (yPos > 260) {
-                            doc.addPage();
-                            yPos = 20;
+                    let predY = yPos + 16;
+                    report.analysis.predictions.forEach((pred: string) => {
+                        const cleanPred = stripMarkdown(pred);
+                        doc.text(`• ${cleanPred}`, 25, predY);
+                        predY += 7;
+                    });
+                    
+                    yPos = predY + 10;
+                }
+
+                // Key Findings
+                if (report.analysis?.keyFindings && report.analysis.keyFindings.length > 0) {
+                    yPos = addSectionHeader('Key Findings', yPos);
+                    
+                    doc.setFontSize(10);
+                    doc.setTextColor(30, 30, 30);
+                    
+                    report.analysis.keyFindings.forEach((finding: string) => {
+                       const cleanFinding = doc.splitTextToSize(`• ${stripMarkdown(finding)}`, 175);
+                       doc.text(cleanFinding, 20, yPos);
+                       yPos += (cleanFinding.length * 5) + 2;
+                    });
+                    yPos += 10;
+                }
+
+                // --- 5. Detailed Metrics Table ---
+                doc.addPage();
+                yPos = 20;
+                yPos = addSectionHeader('Detailed Metrics', yPos);
+                
+                const tableBody = metrics.map((m: any) => [
+                    m.name,
+                    `${m.value} ${m.unit}`,
+                    m.range || '-',
+                    m.status.toUpperCase()
+                ]);
+
+                autoTable(doc, {
+                    startY: yPos,
+                    head: [['Biomarker', 'Value', 'Reference Range', 'Status']],
+                    body: tableBody,
+                    theme: 'grid',
+                    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontSize: 10 },
+                    bodyStyles: { fontSize: 9, textColor: 50 },
+                    alternateRowStyles: { fillColor: [249, 250, 251] },
+                    margin: { left: 15, right: 15 },
+                    didParseCell: (data: any) => {
+                        // Colorize Status column
+                        if (data.section === 'body' && data.column.index === 3) {
+                            const status = data.cell.raw;
+                            if (status === 'HIGH') data.cell.styles.textColor = [220, 38, 38];
+                            if (status === 'LOW') data.cell.styles.textColor = [37, 99, 235];
+                            if (status === 'NORMAL') data.cell.styles.textColor = [22, 163, 74];
                         }
+                    }
+                });
+
+                // Get final Y after table
+                yPos = (doc as any).lastAutoTable.finalY + 20;
+
+                // --- 6. Chat History ---
+                if (chatMessages.length > 0) {
+                    doc.addPage();
+                    yPos = 20;
+                    yPos = addSectionHeader('AI Consultation', yPos);
+                    
+                    chatMessages.forEach((msg) => {
+                        const isUser = msg.role === 'user';
+                        const role = isUser ? 'You' : 'HealthDoc AI';
                         
-                        const role = msg.role === 'user' ? 'You' : 'HealthDoc AI';
-                        const color = msg.role === 'user' ? [37, 99, 235] : [22, 163, 74]; // Blue : Green
-                        doc.setTextColor(color[0], color[1], color[2]);
+                        // Role Header
+                        doc.setFontSize(9);
                         doc.setFont('helvetica', 'bold');
-                        doc.text(role, 20, yPos);
+                        if (isUser) doc.setTextColor(37, 99, 235); // Blue
+                        else doc.setTextColor(22, 163, 74); // Green
                         
+                        doc.text(role, 20, yPos);
                         yPos += 5;
+                        
+                        // Message Body
+                        doc.setFontSize(10);
                         doc.setFont('helvetica', 'normal');
                         doc.setTextColor(60, 60, 60);
                         
-                        const rawContent = msg.content;
-                        const cleanContent = stripMarkdown(rawContent);
-                        const content = doc.splitTextToSize(cleanContent, 170);
-                        doc.text(content, 20, yPos);
-                        yPos += (content.length * 5) + 8; // Spacing after message
+                        const text = stripMarkdown(msg.content);
+                        const splitText = doc.splitTextToSize(text, 170);
+                        
+                        // Simple background for AI
+                        if (!isUser) {
+                           doc.setFillColor(240, 253, 244); // Light green bg
+                           doc.rect(18, yPos - 4, 175, (splitText.length * 5) + 6, 'F');
+                        }
+
+                        doc.text(splitText, 20, yPos);
+                        yPos += (splitText.length * 5) + 10;
+                        
+                        if (yPos > 270) {
+                            doc.addPage();
+                            yPos = 20;
+                        }
                     });
                 }
                 
