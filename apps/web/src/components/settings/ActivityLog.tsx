@@ -53,7 +53,7 @@ const LogEntryRow = ({ log }: { log: LogEntry }) => {
   );
 };
 
-import { createClient } from '@/lib/supabase/client';
+import { api } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function ActivityLog() {
@@ -61,29 +61,16 @@ export function ActivityLog() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-        
-        if (!token) return;
+        const { data, error } = await api.get('/api/audit?limit=10');
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/audit?limit=20`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        if (error) throw new Error(error);
 
-        if (!res.ok) {
-           const text = await res.text();
-           throw new Error(`Error ${res.status}: ${text || 'Unknown error'}`);
-        }
-
-        const data = await res.json();
-        setLogs(data.data.logs || []);
+        setLogs(data.logs || []);
       } catch (err: any) {
         console.error('Fetch logs error:', err);
         setError(err.message || 'Failed to load activity logs');
@@ -96,6 +83,48 @@ export function ActivityLog() {
       fetchLogs();
     }
   }, [user]);
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      // Fetch all logs (limit 1000 for export)
+      const { data, error } = await api.get('/api/audit?limit=1000');
+      
+      if (error) throw new Error(error);
+      
+      const allLogs = data.logs || [];
+      if (allLogs.length === 0) return;
+
+      // Convert to CSV
+      const headers = ['Date', 'Time', 'Action', 'Description', 'Device', 'IP Address'];
+      const rows = allLogs.map((log: LogEntry) => {
+        const d = new Date(log.createdAt);
+        return [
+          d.toLocaleDateString('en-US'),
+          d.toLocaleTimeString('en-US'),
+          log.action,
+          log.description || log.action,
+          log.userAgent || 'Unknown',
+          log.ipAddress || '-'
+        ].map(cell => `"${cell}"`).join(',');
+      });
+
+      const csvContent = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `activity_log_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Export failed:', err);
+      // Optional: show toast/alert
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -148,7 +177,13 @@ export function ActivityLog() {
           <h3 className="text-lg md:text-xl font-bold mb-1 dark:text-white">Activity Log</h3>
           <p className="text-text-muted dark:text-gray-400 text-xs md:text-sm">HIPAA-compliant audit trail of all account actions.</p>
         </div>
-        <button className="text-primary font-bold text-xs md:text-sm hover:underline">Export CSV</button>
+        <button 
+          onClick={handleExport}
+          disabled={exporting}
+          className="text-primary font-bold text-xs md:text-sm hover:underline disabled:opacity-50"
+        >
+          {exporting ? 'Exporting...' : 'Export CSV'}
+        </button>
       </div>
 
       <div className="overflow-x-auto">
