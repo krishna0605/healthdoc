@@ -68,7 +68,7 @@ export default function HistoryPage() {
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:items-end">
           <div className="flex-1">
             <label className="block text-xs font-bold text-text-muted mb-2 uppercase tracking-widest">Select Biomarker</label>
-            <div className="relative">
+            <div className="relative max-w-md">
               {namesLoading ? (
                 <div className="w-full h-14 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
               ) : metricNames.length === 0 ? (
@@ -80,7 +80,7 @@ export default function HistoryPage() {
                   <select 
                     value={selectedMetric}
                     onChange={(e) => setSelectedMetric(e.target.value)}
-                    className="w-full px-4 py-3.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none font-bold text-sm md:text-base dark:text-white pr-10"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none font-bold text-sm md:text-base dark:text-white pr-10 cursor-pointer"
                   >
                     {metricNames.map((m) => (
                       <option key={m.name} value={m.name}>{m.name}</option>
