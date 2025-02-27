@@ -68,7 +68,7 @@ export default function HistoryPage() {
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:items-end">
           <div className="flex-1">
             <label className="block text-xs font-bold text-text-muted mb-2 uppercase tracking-widest">Select Biomarker</label>
-            <div className="relative max-w-md">
+            <div className="relative w-full md:w-72">
               {namesLoading ? (
                 <div className="w-full h-14 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
               ) : metricNames.length === 0 ? (
