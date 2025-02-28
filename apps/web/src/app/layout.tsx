@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   title: "HealthDoc | Your Health, Translated",
   description: "AI-powered personal health record analysis. Upload medical reports and get instant, understandable insights.",
   keywords: ["medical", "health", "AI", "analysis", "reports", "healthcare", "HIPAA"],
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
