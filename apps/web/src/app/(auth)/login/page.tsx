@@ -199,6 +199,10 @@ function LoginForm() {
             </button>
           </form>
 
+          <div className="mt-8 text-center text-sm font-medium text-text-muted dark:text-gray-400">
+            Don&apos;t have an account? <Link href="/register" className="text-primary font-bold hover:underline ml-1">Sign up</Link>
+          </div>
+
 
         </div>
 
