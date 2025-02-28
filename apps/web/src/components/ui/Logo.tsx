@@ -1,0 +1,33 @@
+import React from 'react';
+
+interface LogoProps {
+  className?: string;
+}
+
+export const Logo: React.FC<LogoProps> = ({ className = "size-8" }) => {
+  return (
+    <div className={`${className} text-primary`}>
+      <svg
+        fill="none"
+        viewBox="0 0 40 40"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full h-full"
+      >
+        <path
+          d="M6,24.2s-.3-1-.3-3.9c0-2.9,0-8.5,0-8.5,0-1.1.3-1.8.5-2.1,0,0,3.7,0,3.7,0,1.1,0,2.3-1.2,2.3-2.3V3.2c.2-.7.4-2.3,1.9-3.2C7.8,1.2,3.2,7.8,3,11.9v8.2c0,1.3.9,3.3,3,4.1Z"
+          fill="currentColor"
+        />
+        <path
+          d="M36,8.4L28,.5c-.3-.3-.7-.5-1.1-.5h-10.9s-2.1.4-2.4,2.5h12.1v4.2c0,2.1,1.7,3.8,3.8,3.8h4.3v11.5c0,5.4-4.5,11.1-13.9,15-2.3-.8-6.6-1.4-6.2-8.3v-.4c0-1.3-1.1-2.4-2.4-2.4h-4.1c-1.1-.3-3.8-1.2-4.3-3.1.9,4.5,2.8,12.1,16.7,17.1,0,0,16-5.4,16.7-17.5v-13.1c0-.4-.2-.8-.4-1.1ZM29.6,8.1c-.7,0-1.3-.6-1.3-1.4v-2.4c0,0,3.8,3.7,3.8,3.7h-2.5Z"
+          fill="currentColor"
+        />
+        <polygon
+          points="16.2 9.5 16.2 16.4 9.3 16.4 9.3 23.5 16.2 23.5 16.2 30.4 23.3 30.4 23.3 23.5 30.2 23.5 30.2 16.4 23.3 16.4 23.3 9.4 16.2 9.5"
+          fill="currentColor"
+        />
+      </svg>
+    </div>
+  );
+};
+
+export default Logo;

@@ -11,12 +11,8 @@ interface SidebarProps {
 }
 
 // Logo SVG component
-const Logo = () => (
-  <svg fill="none" viewBox="0 0 48 48" className="w-8 h-8" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="24" cy="24" r="24" fill="currentColor" />
-    <path d="M24 10L38 38H10L24 10Z" fill="white" />
-  </svg>
-);
+import { Logo } from '@/components/ui/Logo';
+
 
 interface SidebarItemProps {
   icon: string;

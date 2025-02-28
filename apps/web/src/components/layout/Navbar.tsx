@@ -6,14 +6,8 @@ import { Menu, X } from 'lucide-react';
 import { ThemeToggle } from '../ui/ThemeToggle';
 
 // HealthDoc Logo SVG
-const Logo = () => (
-  <div className="size-8 text-primary">
-    <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="24" cy="24" r="24" fill="currentColor" />
-      <path d="M24 10L38 38H10L24 10Z" fill="white" />
-    </svg>
-  </div>
-);
+import { Logo } from '@/components/ui/Logo';
+
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
