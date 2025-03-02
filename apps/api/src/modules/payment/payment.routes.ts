@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
-import { square } from '../../lib/square';
-import { prisma } from '../../lib/prisma';
+import { square } from '../../lib/square.js';
+import { prisma } from '../../lib/prisma.js';
 import { z } from 'zod';
 import { WebhooksHelper } from 'square';
 import crypto from 'crypto';
