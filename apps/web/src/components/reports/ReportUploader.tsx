@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import { API_URL } from '@/lib/api' 
 import { useFamilyContext } from '@/components/family'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAuth } from '@/hooks/useAuth'
 
 interface ReportUploaderProps {
   onUploadComplete?: (reportId: string) => void
@@ -54,8 +55,25 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
     },
   })
 
+  const { user } = useAuth() // Use the updated hook
+  
   const handleUpload = async () => {
-    if (!file) return
+    if (!file || !user) return
+
+    // CHECK PRICING LIMITS
+    const PLAN_LIMITS = {
+      BASIC: 10,
+      PRO: Infinity,
+      FAMILY: Infinity
+    }
+    const currentTier = (user as any).planTier || 'BASIC'
+    const currentCount = (user as any).monthlyUploadCount || 0
+    const limit = PLAN_LIMITS[currentTier as keyof typeof PLAN_LIMITS] || 10
+
+    if (currentCount >= limit) {
+      setError(`You have reached your monthly limit of ${limit} uploads. Upgrade to Pro for unlimited uploads.`)
+      return
+    }
 
     setUploadState('uploading')
     setProgress(0)

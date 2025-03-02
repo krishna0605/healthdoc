@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { API_URL } from '@/lib/api' 
 import { Send, Loader2 } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -23,6 +24,7 @@ export function ReportChat({ reportId, onMessagesChange }: ReportChatProps) {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
+  const { user } = useAuth()
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -226,7 +228,19 @@ export function ReportChat({ reportId, onMessagesChange }: ReportChatProps) {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 relative">
+        {/* LOCK OVERLAY FOR BASIC USERS */}
+        {(user as any)?.planTier === 'BASIC' && (
+          <div className="absolute inset-0 z-20 bg-white/60 dark:bg-gray-800/80 backdrop-blur-sm flex flex-col items-center justify-center text-center p-4">
+            <span className="material-symbols-outlined text-3xl text-gray-400 mb-2">lock</span>
+            <p className="font-bold text-gray-800 dark:text-white mb-1">AI Chat is a Pro Feature</p>
+            <p className="text-xs text-text-muted mb-3">Upgrade to ask questions about your health reports.</p>
+            <a href="/settings/billing" className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-full hover:bg-primary/90 transition-colors shadow-lg">
+              Upgrade to Pro
+            </a>
+          </div>
+        )}
+
         <div className="flex gap-2">
           <input
             type="text"
@@ -235,11 +249,11 @@ export function ReportChat({ reportId, onMessagesChange }: ReportChatProps) {
             onKeyDown={(e) => e.key === 'Enter' && sendMessage(input)}
             placeholder="Ask about your results..."
             className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none dark:text-white"
-            disabled={loading}
+            disabled={loading || (user as any)?.planTier === 'BASIC'}
           />
           <button
             onClick={() => sendMessage(input)}
-            disabled={!input.trim() || loading}
+            disabled={!input.trim() || loading || (user as any)?.planTier === 'BASIC'}
             className="px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="size-5" />

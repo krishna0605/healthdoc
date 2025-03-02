@@ -25,6 +25,11 @@ model Profile {
   reports   Report[]
   auditLogs AuditLog[]
 
+  // Pricing & Usage
+  planTier           PlanTier  @default(BASIC) @map("plan_tier")
+  monthlyUploadCount Int       @default(0) @map("monthly_upload_count")
+  lastUsageReset     DateTime  @default(now()) @map("last_usage_reset")
+
   @@map("profiles")
 }
 
@@ -32,6 +37,12 @@ enum UserRole {
   PATIENT
   ADMIN
   AUDITOR
+}
+
+enum PlanTier {
+  BASIC
+  PRO
+  FAMILY
 }
 
 // ============ FAMILY PROFILES ============
