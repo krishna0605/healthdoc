@@ -1,24 +1,18 @@
-import { Client, Environment } from 'square';
 import dotenv from 'dotenv';
 import { createRequire } from 'module';
 
 dotenv.config();
 
-// Fix for Square SDK CommonJS/ESM interop issues
-let SquareClient = Client;
-let SquareEnvironment = Environment;
+// Bypass TypeScript static analysis for the 'square' module
+// because its type definitions are conflicting with the build setup.
+const require = createRequire(import.meta.url);
+const Square = require('square') as any;
 
-// Fallback if named exports are missing (CommonJS module loaded as default)
-if (!SquareClient) {
-  const require = createRequire(import.meta.url);
-  const Square = require('square');
-  SquareClient = Square.Client;
-  SquareEnvironment = Square.Environment;
-}
+const { Client, Environment } = Square;
 
 const isProduction = process.env.SQUARE_ENVIRONMENT === 'production';
 
-export const square = new SquareClient({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN,
-  environment: isProduction ? SquareEnvironment.Production : SquareEnvironment.Sandbox,
+export const square = new Client({
+  accessToken: process.env.SQUARE_ACCESS_TOKEN || '',
+  environment: isProduction ? Environment.Production : Environment.Sandbox,
 });
