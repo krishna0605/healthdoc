@@ -33,7 +33,7 @@ export default function BillingPage() {
       }
     } catch (error) {
       console.error('Upgrade failed', error);
-      alert('Something went wrong. Please try again.');
+      alert(`Payment initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(null);
     }

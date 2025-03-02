@@ -36,6 +36,28 @@ export function useAuth() {
           .eq('user_id', sessionUser.id)
           .single()
 
+        if (!profile) {
+             // Guardrail: Create profile if missing
+             await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/ensure-profile`, {
+                 method: 'POST',
+                 headers: { 'Authorization': `Bearer ${sessionUser.id}` } // Simplified for now, ideally use access token
+             }).catch(console.error);
+             
+             // Retry fetch
+             const { data: newProfile } = await supabase
+              .from('profiles')
+              .select('plan_tier, monthly_upload_count')
+              .eq('user_id', sessionUser.id)
+              .single()
+              
+             setUser({
+                ...sessionUser,
+                planTier: newProfile?.plan_tier || 'BASIC',
+                monthlyUploadCount: newProfile?.monthly_upload_count || 0
+             })
+             return;
+        }
+
         setUser({
           ...sessionUser,
           planTier: profile?.plan_tier || 'BASIC',

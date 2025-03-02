@@ -21,7 +21,7 @@ export async function paymentRoutes(fastify: FastifyInstance) {
     
     // Price mapping (in cents)
     const prices = { PRO: 1900, FAMILY: 4900 };
-    const amount = BigInt(prices[planTier]);
+    const amount = BigInt(prices[planTier]); // Square SDK expects bigint for Money amount
 
     try {
       const response = await square.checkoutApi.createPaymentLink({

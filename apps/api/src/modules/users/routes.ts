@@ -23,6 +23,27 @@ export async function userRoutes(fastify: FastifyInstance) {
     request.user = user
   })
 
+    request.user = user
+  })
+
+  // Ensure Profile Exists (Guardrail)
+  fastify.post('/ensure-profile', async (request, reply) => {
+    try {
+      const profile = await prisma.profile.upsert({
+        where: { userId: request.user.id },
+        update: {},
+        create: {
+          userId: request.user.id,
+          planTier: 'BASIC',
+          monthlyUploadCount: 0
+        }
+      });
+      return { data: profile };
+    } catch (error: any) {
+      reply.code(500).send({ error: error.message });
+    }
+  });
+
   // Get Preferences
   fastify.get('/preferences', async (request: any, reply) => {
     try {
