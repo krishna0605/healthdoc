@@ -18,6 +18,7 @@ export async function paymentRoutes(fastify: FastifyInstance) {
     if (!body.success) return reply.status(400).send(body.error);
 
     const { userId, planTier } = body.data;
+    request.log.info(`[Payment] Creating checkout for user ${userId} request for ${planTier}`);
     
     // Price mapping (in cents)
     const prices = { PRO: 1900, FAMILY: 4900 };

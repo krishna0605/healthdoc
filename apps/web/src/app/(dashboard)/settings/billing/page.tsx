@@ -43,10 +43,15 @@ export default function BillingPage() {
 
   return (
     <div className="max-w-6xl mx-auto w-full pb-20">
-       <header className="mb-10">
-         <h1 className="text-3xl md:text-4xl font-black mb-2 dark:text-white">Subscription Plans</h1>
-         <p className="text-text-muted dark:text-gray-400">Choose the plan that fits your health journey.</p>
-       </header>
+      <header className="mb-10">
+        <h1 className="text-3xl md:text-4xl font-black mb-2 dark:text-white">Subscription Plans</h1>
+        <p className="text-text-muted dark:text-gray-400">Choose the plan that fits your health journey.</p>
+        
+        {/* DEBUG INFO - TO BE REMOVED */}
+        <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono text-gray-500">
+          DEBUG: API_URL = {process.env.NEXT_PUBLIC_API_URL || '(undefined)'}
+        </div>
+      </header>
 
        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
          {/* BASIC PLAN */}
