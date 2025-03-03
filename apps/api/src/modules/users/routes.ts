@@ -23,8 +23,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     request.user = user
   })
 
-    request.user = user
-  })
+
 
   // Ensure Profile Exists (Guardrail)
   fastify.post('/ensure-profile', async (request, reply) => {
