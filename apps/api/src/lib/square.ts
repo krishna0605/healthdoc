@@ -14,12 +14,13 @@ if (pkg && typeof pkg === 'object' && 'default' in pkg) {
 }
 
 // Robust Resolution: Check both top-level and .default
-// This handles different build execution contexts (local node vs docker container)
-const Client = pkg.Client || (pkg as any).default?.Client;
-const Environment = pkg.Environment || (pkg as any).default?.Environment;
+// Based on logs: keys include 'SquareClient', 'SquareEnvironment'
+const Client = pkg.SquareClient || (pkg as any).default?.SquareClient || pkg.Client || (pkg as any).default?.Client;
+const Environment = pkg.SquareEnvironment || (pkg as any).default?.SquareEnvironment || pkg.Environment || (pkg as any).default?.Environment;
 
 if (!Client) {
     console.error('CRITICAL: Square Client could not be found in exports.');
+    console.error('Available keys:', Object.keys(pkg));
     throw new Error('Square Client missing');
 }
 
@@ -31,6 +32,7 @@ if (!Environment) {
 const isProduction = process.env.SQUARE_ENVIRONMENT === 'production';
 
 // Use a safe fallback for environment enum access just in case
+// Note: SquareEnvironment behaves like an object/enum
 const envOption = isProduction 
     ? (Environment.Production || 'production') 
     : (Environment.Sandbox || 'sandbox');
