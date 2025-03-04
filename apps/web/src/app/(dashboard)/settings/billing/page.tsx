@@ -13,7 +13,7 @@ export default function BillingPage() {
   
   // Auto-trigger from URL param (e.g. from marketing page)
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && user) {
         const params = new URLSearchParams(window.location.search);
         const planParam = params.get('plan');
         if (planParam && (planParam === 'PRO' || planParam === 'FAMILY') && !loading) {
@@ -25,6 +25,10 @@ export default function BillingPage() {
   }, [user]); // Wait for user to be loaded
 
   const handleUpgrade = async (planTier: 'PRO' | 'FAMILY') => {
+    if (!user) {
+        console.error("Cannot upgrade: User not found");
+        return;
+    }
     setLoading(planTier);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payment/create-checkout`, {
