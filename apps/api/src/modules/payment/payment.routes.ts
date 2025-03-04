@@ -14,8 +14,13 @@ export async function paymentRoutes(fastify: FastifyInstance) {
       planTier: z.enum(['PRO', 'FAMILY']),
     });
 
+    request.log.info(`[Payment] Raw Body: ${JSON.stringify(request.body)}`);
+
     const body = schema.safeParse(request.body);
-    if (!body.success) return reply.status(400).send(body.error);
+    if (!body.success) {
+        request.log.error(`[Payment] Validation Error: ${JSON.stringify(body.error)}`);
+        return reply.status(400).send(body.error);
+    }
 
     const { userId, planTier } = body.data;
     request.log.info(`[Payment] Creating checkout for user ${userId} request for ${planTier}`);

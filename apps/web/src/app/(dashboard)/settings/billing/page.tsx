@@ -29,7 +29,8 @@ export default function BillingPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert('Failed to initialize checkout');
+        console.error('Checkout failed:', data);
+        alert(`Failed to initialize checkout: ${JSON.stringify(data)}`);
       }
     } catch (error) {
       console.error('Upgrade failed', error);
