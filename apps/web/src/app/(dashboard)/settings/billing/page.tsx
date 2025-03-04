@@ -10,6 +10,19 @@ import { FadeIn } from '@/components/animations/FadeIn';
 export default function BillingPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
+  
+  // Auto-trigger from URL param (e.g. from marketing page)
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const planParam = params.get('plan');
+        if (planParam && (planParam === 'PRO' || planParam === 'FAMILY') && !loading) {
+            // Remove param to prevent loop
+            window.history.replaceState({}, '', '/settings/billing');
+            handleUpgrade(planParam);
+        }
+    }
+  }, [user]); // Wait for user to be loaded
 
   const handleUpgrade = async (planTier: 'PRO' | 'FAMILY') => {
     setLoading(planTier);

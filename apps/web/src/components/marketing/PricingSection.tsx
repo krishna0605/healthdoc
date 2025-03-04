@@ -74,6 +74,42 @@ const PricingCard: React.FC<{
 
 export const PricingSection: React.FC = () => {
     const [isAnnual, setIsAnnual] = useState(true);
+    const [loading, setLoading] = useState<string | null>(null);
+    // Note: In a marketing component, we might not have direct access to auth context 
+    // unless wrapped in the provider. Assuming it is, or we use a simple check.
+    // Ideally, we redirect to register if not logged in.
+    
+    // We'll use a direct window location check or standard fetch for now
+    // But since this is a client component, we can try to import useAuth if available
+    // or just redirect to the app portal for upgrade.
+    
+    const handleUpgrade = async (plan: string) => {
+        setLoading(plan);
+        const planTier = plan === 'Pro' ? 'PRO' : 'FAMILY';
+        
+        // 1. Check if user is logged in (simplified check for public page)
+        // If we can't easily check auth here without context, strictly redirecting 
+        // to the dashboard billing page is a safer UX pattern for a marketing site.
+        // However, to fulfill the "Click -> Pay" requirement:
+        
+        try {
+             // Attempt to call API directly - if 401, redirect to login
+             // We need the user ID. If we are on the marketing site, we might not have the session.
+             // Strategy: Redirect to the dashboard billing page with a query param to auto-trigger?
+             // Or better: Redirect to Register/Login with a 'redirect_to' param?
+             
+             // Simplest robust path for "Get Pro Today" on a public site:
+             // Redirect user to the dashboard billing page where logic already exists.
+             window.location.href = `/settings/billing?plan=${planTier}`;
+             
+        } catch (error) {
+            console.error(error);
+            alert('Please log in to upgrade.');
+            window.location.href = '/login';
+        } finally {
+            setLoading(null);
+        }
+    };
 
     const plans = [
         {
@@ -81,6 +117,7 @@ export const PricingSection: React.FC = () => {
           price: "$0",
           description: "Essential for started your health tracking.",
           buttonText: "Get Started Free",
+          onClick: () => window.location.href = '/register',
           features: [
             "10 monthly document uploads",
             "Encrypted health record storage",
@@ -93,7 +130,8 @@ export const PricingSection: React.FC = () => {
           price: isAnnual ? "$19" : "$29",
           description: "Advanced AI tools for peak performance.",
           isPro: true,
-          buttonText: "Get Pro Today",
+          buttonText: loading === 'Pro' ? "Processing..." : "Get Pro Today",
+          onClick: () => handleUpgrade('Pro'),
           features: [
             "Unlimited report generation",
             "Advanced health trend analysis",
@@ -106,7 +144,8 @@ export const PricingSection: React.FC = () => {
           title: "Family",
           price: isAnnual ? "$49" : "$59",
           description: "Comprehensive care for your whole household.",
-          buttonText: "Select Family Plan",
+          buttonText: loading === 'Family' ? "Processing..." : "Select Family Plan",
+          onClick: () => handleUpgrade('Family'),
           features: [
             "Up to 5 individual profiles",
             "Centralized family dashboard",
