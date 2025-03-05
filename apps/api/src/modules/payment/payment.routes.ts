@@ -55,9 +55,11 @@ export async function paymentRoutes(fastify: FastifyInstance) {
       });
 
       return reply.send({ url: response.result.paymentLink?.url });
-    } catch (error) {
+    } catch (error: any) {
       request.log.error(error);
-      return reply.status(500).send({ error: 'Failed to create checkout link' });
+      // Return detailed error for debugging
+      const errorDetail = error.result ? JSON.stringify(error.result) : (error.message || JSON.stringify(error));
+      return reply.status(500).send({ error: `Failed to create checkout link: ${errorDetail}` });
     }
   });
 
