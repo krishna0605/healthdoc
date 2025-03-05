@@ -30,7 +30,8 @@ export async function paymentRoutes(fastify: FastifyInstance) {
     const amount = BigInt(prices[planTier]); // Square SDK expects bigint for Money amount
 
     try {
-      const response = await square.checkoutApi.createPaymentLink({
+      // Correct accessor for Square SDK v44+ is .checkout (not .checkoutApi)
+      const response = await square.checkout.createPaymentLink({
         idempotencyKey: crypto.randomUUID(),
         order: {
           locationId: process.env.SQUARE_LOCATION_ID!,
