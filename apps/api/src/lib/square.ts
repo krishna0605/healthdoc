@@ -38,6 +38,6 @@ const envOption = isProduction
     : (Environment.Sandbox || 'sandbox');
 
 export const square = new Client({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN || '',
+  token: process.env.SQUARE_ACCESS_TOKEN || '',
   environment: envOption,
 });
