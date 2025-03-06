@@ -25,6 +25,15 @@ export async function paymentRoutes(fastify: FastifyInstance) {
     const { userId, planTier } = body.data;
     request.log.info(`[Payment] Creating checkout for user ${userId} request for ${planTier}`);
     
+    // CRITICAL CONFIG CHECK: Detect Sandbox Token in Production
+    const env = (process.env.SQUARE_ENVIRONMENT || '').toLowerCase();
+    const token = process.env.SQUARE_ACCESS_TOKEN || '';
+    if (env === 'production' && token.startsWith('EAAAE')) {
+        const errorMsg = 'CONFIGURATION ERROR: You are using a Sandbox Token (starts with EAAAE) in Production Mode. Please update SQUARE_ACCESS_TOKEN in Railway with your Production Token.';
+        request.log.error(errorMsg);
+        return reply.status(500).send({ error: errorMsg });
+    }
+    
     // Price mapping (in cents)
     const prices = { PRO: 1900, FAMILY: 4900 };
     const amount = BigInt(prices[planTier]); // Square SDK expects bigint for Money amount
@@ -58,9 +67,17 @@ export async function paymentRoutes(fastify: FastifyInstance) {
       return reply.send({ url: response.result.paymentLink?.url });
     } catch (error: any) {
       request.log.error(error);
+      
+      // Debug info to help user identify mismatch
+      const env = process.env.SQUARE_ENVIRONMENT || 'sandbox (default)';
+      const token = process.env.SQUARE_ACCESS_TOKEN || '';
+      const tokenHint = token.substring(0, 4) + '...';
+      
+      const debugInfo = `[Env: ${env}, Token: ${tokenHint}]`;
+
       // Return detailed error for debugging
       const errorDetail = error.result ? JSON.stringify(error.result) : (error.message || JSON.stringify(error));
-      return reply.status(500).send({ error: `Failed to create checkout link: ${errorDetail}` });
+      return reply.status(500).send({ error: `Failed to create checkout link. ${debugInfo} Details: ${errorDetail}` });
     }
   });
 

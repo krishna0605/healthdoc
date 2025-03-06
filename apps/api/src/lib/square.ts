@@ -29,9 +29,8 @@ if (!Environment) {
     throw new Error('Square Environment missing');
 }
 
-// STRICT environment control: Only use Production if explicitly set to 'production'
-// We do NOT want to auto-infer from NODE_ENV because user might be testing with Sandbox creds on Railway.
-const isProduction = process.env.SQUARE_ENVIRONMENT === 'production';
+// STRICT environment control: Only use Production if explicitly set to 'production' (case insensitive)
+const isProduction = (process.env.SQUARE_ENVIRONMENT || '').toLowerCase() === 'production';
 console.log(`[Square SDK] Initializing in ${isProduction ? 'PRODUCTION' : 'SANDBOX'} mode`);
 
 const token = process.env.SQUARE_ACCESS_TOKEN || '';
