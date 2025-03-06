@@ -29,7 +29,9 @@ if (!Environment) {
     throw new Error('Square Environment missing');
 }
 
-const isProduction = process.env.SQUARE_ENVIRONMENT === 'production';
+// Default to production if NODE_ENV is production (Railway default), OR if explicitly set
+const isProduction = process.env.SQUARE_ENVIRONMENT === 'production' || process.env.NODE_ENV === 'production';
+console.log(`[Square SDK] Initializing in ${isProduction ? 'PRODUCTION' : 'SANDBOX'} mode`);
 
 // Use a safe fallback for environment enum access just in case
 // Note: SquareEnvironment behaves like an object/enum
