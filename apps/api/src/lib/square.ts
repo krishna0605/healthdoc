@@ -29,9 +29,14 @@ if (!Environment) {
     throw new Error('Square Environment missing');
 }
 
-// Default to production if NODE_ENV is production (Railway default), OR if explicitly set
-const isProduction = process.env.SQUARE_ENVIRONMENT === 'production' || process.env.NODE_ENV === 'production';
+// STRICT environment control: Only use Production if explicitly set to 'production'
+// We do NOT want to auto-infer from NODE_ENV because user might be testing with Sandbox creds on Railway.
+const isProduction = process.env.SQUARE_ENVIRONMENT === 'production';
 console.log(`[Square SDK] Initializing in ${isProduction ? 'PRODUCTION' : 'SANDBOX'} mode`);
+
+const token = process.env.SQUARE_ACCESS_TOKEN || '';
+// DEBUG: Log first 5 chars of token to verify loading
+console.log(`[Square SDK] Loaded Token: ${token.substring(0, 5)}... (Length: ${token.length})`);
 
 // Use a safe fallback for environment enum access just in case
 // Note: SquareEnvironment behaves like an object/enum
