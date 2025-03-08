@@ -37,6 +37,11 @@ const token = process.env.SQUARE_ACCESS_TOKEN || '';
 // DEBUG: Log first 5 chars of token to verify loading
 console.log(`[Square SDK] Loaded Token: ${token.substring(0, 5)}... (Length: ${token.length})`);
 
+// VALIDATION: Check if user pasted App ID instead of Access Token
+if (token.startsWith('sq0id')) {
+    console.error('CRITICAL CONFIG ERROR: SQUARE_ACCESS_TOKEN appears to be an Application ID (starts with sq0id). You must use the ACCESS TOKEN (starts with EAAA...).');
+}
+
 // Use a safe fallback for environment enum access just in case
 // Note: SquareEnvironment behaves like an object/enum
 const envOption = isProduction 
