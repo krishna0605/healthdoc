@@ -114,7 +114,7 @@ export const PricingSection: React.FC = () => {
     const plans = [
         {
           title: "Basic",
-          price: "$0",
+          price: "₹0",
           description: "Essential for started your health tracking.",
           buttonText: "Get Started Free",
           onClick: () => window.location.href = '/register',
@@ -127,7 +127,7 @@ export const PricingSection: React.FC = () => {
         },
         {
           title: "Pro",
-          price: isAnnual ? "$19" : "$29",
+          price: isAnnual ? "₹1,599" : "₹1,999",
           description: "Advanced AI tools for peak performance.",
           isPro: true,
           buttonText: loading === 'Pro' ? "Processing..." : "Get Pro Today",
@@ -142,7 +142,7 @@ export const PricingSection: React.FC = () => {
         },
          {
           title: "Family",
-          price: isAnnual ? "$49" : "$59",
+          price: isAnnual ? "₹3,999" : "₹4,999",
           description: "Comprehensive care for your whole household.",
           buttonText: loading === 'Family' ? "Processing..." : "Select Family Plan",
           onClick: () => handleUpgrade('Family'),

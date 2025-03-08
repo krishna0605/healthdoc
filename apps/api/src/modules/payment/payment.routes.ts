@@ -34,8 +34,10 @@ export async function paymentRoutes(fastify: FastifyInstance) {
         return reply.status(500).send({ error: errorMsg });
     }
     
-    // Price mapping (in cents)
-    const prices = { PRO: 1900, FAMILY: 4900 };
+    // Price mapping (in paise - 1/100 INR)
+    // PRO: ₹1,599 (~$19) -> 159900 paise
+    // FAMILY: ₹3,999 (~$49) -> 399900 paise
+    const prices = { PRO: 159900, FAMILY: 399900 };
     const amount = BigInt(prices[planTier]); // Square SDK expects bigint for Money amount
 
     try {
@@ -50,7 +52,7 @@ export async function paymentRoutes(fastify: FastifyInstance) {
               quantity: '1',
               basePriceMoney: {
                 amount: amount,
-                currency: 'USD',
+                currency: 'INR',
               },
             },
           ],

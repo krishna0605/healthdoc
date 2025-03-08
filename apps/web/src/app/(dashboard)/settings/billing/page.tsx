@@ -77,7 +77,7 @@ export default function BillingPage() {
            <Card className={`h-full border-2 ${currentPlan === 'BASIC' ? 'border-primary shadow-lg scale-105' : 'border-gray-100 dark:border-gray-800'}`}>
              <CardHeader>
                <div className="text-sm font-bold text-text-muted uppercase tracking-wider mb-2">Basic</div>
-               <CardTitle className="text-4xl font-black mb-2">$0<span className="text-base font-medium text-text-muted">/mo</span></CardTitle>
+               <CardTitle className="text-4xl font-black mb-2">₹0<span className="text-base font-medium text-text-muted">/mo</span></CardTitle>
                <CardDescription>Essential for starting your health tracking.</CardDescription>
              </CardHeader>
              <CardContent className="space-y-4">
@@ -102,7 +102,7 @@ export default function BillingPage() {
              {currentPlan !== 'PRO' && <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Most Popular</div>}
              <CardHeader>
                <div className="text-sm font-bold text-blue-500 uppercase tracking-wider mb-2">Pro</div>
-               <CardTitle className="text-4xl font-black mb-2">$19<span className="text-base font-medium text-text-muted">/mo</span></CardTitle>
+               <CardTitle className="text-4xl font-black mb-2">₹1,599<span className="text-base font-medium text-text-muted">/mo</span></CardTitle>
                <CardDescription>Advanced AI tools for peak performance.</CardDescription>
              </CardHeader>
              <CardContent className="space-y-4">
@@ -132,7 +132,7 @@ export default function BillingPage() {
            <Card className={`h-full border-2 ${currentPlan === 'FAMILY' ? 'border-primary shadow-lg scale-105' : 'border-gray-100 dark:border-gray-800'}`}>
              <CardHeader>
                <div className="text-sm font-bold text-text-muted uppercase tracking-wider mb-2">Family</div>
-               <CardTitle className="text-4xl font-black mb-2">$49<span className="text-base font-medium text-text-muted">/mo</span></CardTitle>
+               <CardTitle className="text-4xl font-black mb-2">₹3,999<span className="text-base font-medium text-text-muted">/mo</span></CardTitle>
                <CardDescription>Comprehensive care for your whole household.</CardDescription>
              </CardHeader>
              <CardContent className="space-y-4">
