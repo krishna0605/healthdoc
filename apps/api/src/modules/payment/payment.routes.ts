@@ -65,8 +65,8 @@ export async function paymentRoutes(fastify: FastifyInstance) {
           redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing?success=true`,
         },
       });
-
-      return reply.send({ url: response.result.paymentLink?.url });
+      // SDK v44: HttpResponsePromise resolves directly to the response body
+      return reply.send({ url: response.paymentLink?.url });
     } catch (error: any) {
       request.log.error(error);
       
