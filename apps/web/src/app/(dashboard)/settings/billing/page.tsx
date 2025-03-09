@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { FadeIn } from '@/components/animations/FadeIn';
@@ -16,16 +17,21 @@ interface UsageData {
 }
 
 export default function BillingPage() {
-  const { user, accessToken } = useAuth();
+  const { user } = useAuth();
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUsage = async () => {
-      if (!accessToken) return;
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setLoading(false);
+        return;
+      }
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/usage`, {
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${session.access_token}` }
         });
         if (res.ok) {
           setUsage(await res.json());
@@ -37,7 +43,7 @@ export default function BillingPage() {
       }
     };
     fetchUsage();
-  }, [accessToken]);
+  }, [user]);
 
   const usagePercent = usage ? (usage.used / usage.limit) * 100 : 0;
 
