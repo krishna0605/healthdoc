@@ -43,6 +43,8 @@ export interface Metric {
   name: string
   value: number
   unit: string
+  standardRange?: string    // From API as snake_case
+  standard_range?: string   // Alternative field name
   normalRangeLow?: number
   normalRangeHigh?: number
   status: MetricStatus

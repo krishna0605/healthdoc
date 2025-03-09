@@ -65,9 +65,10 @@ export function MetricsTable({ metrics, className }: MetricsTableProps) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center text-gray-500 text-sm">
-                      {metric.normalRangeLow && metric.normalRangeHigh
+                      {metric.standardRange || metric.standard_range || 
+                       (metric.normalRangeLow && metric.normalRangeHigh
                         ? `${metric.normalRangeLow} - ${metric.normalRangeHigh}`
-                        : '-'}
+                        : '-')}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span

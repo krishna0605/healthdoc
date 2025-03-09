@@ -184,7 +184,7 @@ export default function ReportDetailPage() {
         value: String(m.value),
         unit: m.unit,
         status: normalizedStatus,
-        range: m.referenceRange
+        range: (m as any).standardRange || (m as any).standard_range || m.referenceRange || '-'
       };
     });
   }, [report?.metrics]);
