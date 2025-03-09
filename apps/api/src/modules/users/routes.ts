@@ -151,4 +151,38 @@ export async function userRoutes(fastify: FastifyInstance) {
       reply.code(500).send({ error: error.message })
     }
   })
+
+  // ============ USAGE TRACKING ============
+
+  // Get Monthly Usage Stats
+  fastify.get('/usage', async (request: any, reply) => {
+    try {
+      const MONTHLY_LIMIT = 5;
+      
+      const profile = await prisma.profile.findUnique({
+        where: { userId: request.user.id },
+        select: { monthlyUploadCount: true, lastUsageReset: true }
+      });
+
+      const now = new Date();
+      const lastReset = profile?.lastUsageReset || now;
+      const daysSinceReset = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60 * 24);
+      
+      // If 30+ days passed, consider it reset
+      const effectiveCount = daysSinceReset >= 30 ? 0 : (profile?.monthlyUploadCount || 0);
+      const remaining = Math.max(0, MONTHLY_LIMIT - effectiveCount);
+      const daysUntilReset = Math.max(0, Math.ceil(30 - daysSinceReset));
+      const resetDate = new Date(lastReset.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      return {
+        limit: MONTHLY_LIMIT,
+        used: effectiveCount,
+        remaining,
+        resetDate: resetDate.toISOString(),
+        daysUntilReset
+      };
+    } catch (error: any) {
+      reply.code(500).send({ error: error.message });
+    }
+  });
 }

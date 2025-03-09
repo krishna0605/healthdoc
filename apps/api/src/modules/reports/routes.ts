@@ -69,14 +69,43 @@ export async function reportRoutes(fastify: FastifyInstance) {
     const body = createReportSchema.parse(request.body)
 
     // Ensure profile exists before creating report
-    await prisma.profile.upsert({
+    const profile = await prisma.profile.upsert({
       where: { userId: user.id },
       update: {}, // No update needed if exists
       create: {
         userId: user.id,
         name: user.email?.split('@')[0] || 'User'
-      }
+      },
+      select: { monthlyUploadCount: true, lastUsageReset: true }
     })
+
+    // ============ UPLOAD LIMIT CHECK (5 per rolling 30-day month) ============
+    const MONTHLY_LIMIT = 5;
+    const now = new Date();
+    const lastReset = profile.lastUsageReset || new Date(0);
+    const daysSinceReset = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60 * 24);
+
+    // Reset counter if 30+ days have passed
+    let currentCount = profile.monthlyUploadCount || 0;
+    if (daysSinceReset >= 30) {
+      await prisma.profile.update({
+        where: { userId: user.id },
+        data: { monthlyUploadCount: 0, lastUsageReset: now }
+      });
+      currentCount = 0;
+    }
+
+    // Check if user has exceeded their limit
+    if (currentCount >= MONTHLY_LIMIT) {
+      const resetDate = new Date(lastReset.getTime() + 30 * 24 * 60 * 60 * 1000);
+      return reply.code(429).send({
+        error: 'Monthly upload limit reached',
+        message: `You have used all ${MONTHLY_LIMIT} uploads this month. Your limit resets in ${Math.ceil(30 - daysSinceReset)} days.`,
+        remaining: 0,
+        resetDate: resetDate.toISOString()
+      });
+    }
+    // ============ END UPLOAD LIMIT CHECK ============
 
     // Create report in database
     const report = await prisma.report.create({
@@ -90,6 +119,12 @@ export async function reportRoutes(fastify: FastifyInstance) {
         fileType: body.fileType,
         status: 'UPLOADED'
       }
+    })
+
+    // Increment upload counter after successful creation
+    await prisma.profile.update({
+      where: { userId: user.id },
+      data: { monthlyUploadCount: { increment: 1 } }
     })
 
     // Log Audit Event

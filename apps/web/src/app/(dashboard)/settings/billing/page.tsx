@@ -1,163 +1,140 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2, Check, X } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { FadeIn } from '@/components/animations/FadeIn';
+import { FileUp, Calendar, Sparkles } from 'lucide-react';
+
+interface UsageData {
+  limit: number;
+  used: number;
+  remaining: number;
+  resetDate: string;
+  daysUntilReset: number;
+}
 
 export default function BillingPage() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState<string | null>(null);
-  
-  // Auto-trigger from URL param (e.g. from marketing page)
-  React.useEffect(() => {
-    if (typeof window !== 'undefined' && user) {
-        const params = new URLSearchParams(window.location.search);
-        const planParam = params.get('plan');
-        if (planParam && (planParam === 'PRO' || planParam === 'FAMILY') && !loading) {
-            // Remove param to prevent loop
-            window.history.replaceState({}, '', '/settings/billing');
-            handleUpgrade(planParam);
+  const { user, accessToken } = useAuth();
+  const [usage, setUsage] = useState<UsageData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsage = async () => {
+      if (!accessToken) return;
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/usage`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (res.ok) {
+          setUsage(await res.json());
         }
-    }
-  }, [user]); // Wait for user to be loaded
-
-  const handleUpgrade = async (planTier: 'PRO' | 'FAMILY') => {
-    if (!user) {
-        console.error("Cannot upgrade: User not found");
-        return;
-    }
-    setLoading(planTier);
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payment/create-checkout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user?.id,
-          planTier: planTier,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        console.error('Checkout failed:', data);
-        alert(`Failed to initialize checkout: ${JSON.stringify(data)}`);
+      } catch (err) {
+        console.error('Failed to fetch usage:', err);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Upgrade failed', error);
-      alert(`Payment initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setLoading(null);
-    }
-  };
+    };
+    fetchUsage();
+  }, [accessToken]);
 
-  const currentPlan = user?.planTier || 'BASIC';
+  const usagePercent = usage ? (usage.used / usage.limit) * 100 : 0;
 
   return (
-    <div className="max-w-6xl mx-auto w-full pb-20">
+    <div className="max-w-4xl mx-auto w-full pb-20">
       <header className="mb-10">
-        <h1 className="text-3xl md:text-4xl font-black mb-2 dark:text-white">Subscription Plans</h1>
-        <p className="text-text-muted dark:text-gray-400">Choose the plan that fits your health journey.</p>
-        
-        {/* DEBUG INFO - TO BE REMOVED */}
-        <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono text-gray-500">
-          DEBUG: API_URL = {process.env.NEXT_PUBLIC_API_URL || '(undefined)'}
-        </div>
+        <h1 className="text-3xl md:text-4xl font-black mb-2 dark:text-white">Your Plan</h1>
+        <p className="text-text-muted dark:text-gray-400">HealthDoc is free with usage limits.</p>
       </header>
 
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-         {/* BASIC PLAN */}
-         <FadeIn delay={0.1}>
-           <Card className={`h-full border-2 ${currentPlan === 'BASIC' ? 'border-primary shadow-lg scale-105' : 'border-gray-100 dark:border-gray-800'}`}>
-             <CardHeader>
-               <div className="text-sm font-bold text-text-muted uppercase tracking-wider mb-2">Basic</div>
-               <CardTitle className="text-4xl font-black mb-2">₹0<span className="text-base font-medium text-text-muted">/mo</span></CardTitle>
-               <CardDescription>Essential for starting your health tracking.</CardDescription>
-             </CardHeader>
-             <CardContent className="space-y-4">
-               <ul className="space-y-3 text-sm">
-                 <li className="flex items-center gap-2"><Check className="size-4 text-primary" /> 10 monthly document uploads</li>
-                 <li className="flex items-center gap-2"><Check className="size-4 text-primary" /> Encrypted health record storage</li>
-                 <li className="flex items-center gap-2"><Check className="size-4 text-primary" /> Standard PDF report exports</li>
-                 <li className="flex items-center gap-2 text-text-muted/50"><X className="size-4" /> RAG AI Chat assistant</li>
-               </ul>
-             </CardContent>
-             <CardFooter>
-               <Button className="w-full" disabled={currentPlan === 'BASIC'} variant={currentPlan === 'BASIC' ? 'outline' : 'default'}>
-                 {currentPlan === 'BASIC' ? 'Current Plan' : 'Get Started Free'}
-               </Button>
-             </CardFooter>
-           </Card>
-         </FadeIn>
+      <div className="grid gap-8">
+        {/* Free Plan Card */}
+        <FadeIn delay={0.1}>
+          <Card className="border-2 border-primary shadow-lg">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-bold text-primary uppercase tracking-wider mb-1">Current Plan</div>
+                  <CardTitle className="text-3xl font-black">Free Forever</CardTitle>
+                </div>
+                <Sparkles className="w-10 h-10 text-primary" />
+              </div>
+              <CardDescription className="mt-2">
+                Enjoy AI-powered health report analysis with a monthly upload limit.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </FadeIn>
 
-         {/* PRO PLAN */}
-         <FadeIn delay={0.2}>
-           <Card className={`h-full border-2 relative overflow-hidden ${currentPlan === 'PRO' ? 'border-primary shadow-2xl scale-105 z-10' : 'border-blue-500/20 dark:border-blue-500/30'}`}>
-             {currentPlan !== 'PRO' && <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Most Popular</div>}
-             <CardHeader>
-               <div className="text-sm font-bold text-blue-500 uppercase tracking-wider mb-2">Pro</div>
-               <CardTitle className="text-4xl font-black mb-2">₹1,599<span className="text-base font-medium text-text-muted">/mo</span></CardTitle>
-               <CardDescription>Advanced AI tools for peak performance.</CardDescription>
-             </CardHeader>
-             <CardContent className="space-y-4">
-               <ul className="space-y-3 text-sm">
-                 <li className="flex items-center gap-2"><Check className="size-4 text-blue-500" /> Unlimited report generation</li>
-                 <li className="flex items-center gap-2"><Check className="size-4 text-blue-500" /> Advanced health trend analysis</li>
-                 <li className="flex items-center gap-2"><Check className="size-4 text-blue-500" /> RAG AI Chat assistant (24/7)</li>
-                 <li className="flex items-center gap-2"><Check className="size-4 text-blue-500" /> Priority AI processing speed</li>
-                 <li className="flex items-center gap-2"><Check className="size-4 text-blue-500" /> Early access to new features</li>
-               </ul>
-             </CardContent>
-             <CardFooter>
-               <Button 
-                 className={`w-full ${currentPlan === 'PRO' ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'}`}
-                 disabled={currentPlan === 'PRO' || !!loading}
-                 onClick={() => handleUpgrade('PRO')}
-               >
-                 {loading === 'PRO' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                 {currentPlan === 'PRO' ? 'Active Plan' : 'Get Pro Today'}
-               </Button>
-             </CardFooter>
-           </Card>
-         </FadeIn>
+        {/* Usage Card */}
+        <FadeIn delay={0.2}>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <FileUp className="w-6 h-6 text-primary" />
+                <CardTitle>Monthly Uploads</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {loading ? (
+                <div className="h-20 flex items-center justify-center text-text-muted">
+                  Loading usage...
+                </div>
+              ) : usage ? (
+                <>
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-2xl font-bold">{usage.used} / {usage.limit}</span>
+                      <span className="text-text-muted">{usage.remaining} remaining</span>
+                    </div>
+                    <Progress value={usagePercent} className="h-3" />
+                  </div>
 
-         {/* FAMILY PLAN */}
-         <FadeIn delay={0.3}>
-           <Card className={`h-full border-2 ${currentPlan === 'FAMILY' ? 'border-primary shadow-lg scale-105' : 'border-gray-100 dark:border-gray-800'}`}>
-             <CardHeader>
-               <div className="text-sm font-bold text-text-muted uppercase tracking-wider mb-2">Family</div>
-               <CardTitle className="text-4xl font-black mb-2">₹3,999<span className="text-base font-medium text-text-muted">/mo</span></CardTitle>
-               <CardDescription>Comprehensive care for your whole household.</CardDescription>
-             </CardHeader>
-             <CardContent className="space-y-4">
-               <ul className="space-y-3 text-sm">
-                 <li className="flex items-center gap-2"><Check className="size-4 text-primary" /> Up to 5 individual profiles</li>
-                 <li className="flex items-center gap-2"><Check className="size-4 text-primary" /> Centralized family dashboard</li>
-                 <li className="flex items-center gap-2"><Check className="size-4 text-primary" /> Enhanced doctor-sharing portal</li>
-                 <li className="flex items-center gap-2"><Check className="size-4 text-primary" /> VIP support & AI processing</li>
-                 <li className="flex items-center gap-2"><Check className="size-4 text-primary" /> Unified billing for all members</li>
-               </ul>
-             </CardContent>
-             <CardFooter>
-               <Button 
-                  className="w-full" 
-                  variant={currentPlan === 'FAMILY' ? 'outline' : 'secondary'}
-                  disabled={currentPlan === 'FAMILY' || !!loading}
-                  onClick={() => handleUpgrade('FAMILY')}
-               >
-                 {loading === 'FAMILY' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                 {currentPlan === 'FAMILY' ? 'Active Plan' : 'Select Family Plan'}
-               </Button>
-             </CardFooter>
-           </Card>
-         </FadeIn>
-       </div>
+                  <div className="flex items-center gap-2 text-sm text-text-muted">
+                    <Calendar className="w-4 h-4" />
+                    <span>
+                      Resets in <strong className="text-foreground">{usage.daysUntilReset} days</strong>
+                      {' '}({new Date(usage.resetDate).toLocaleDateString()})
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center text-text-muted">
+                  <p>5 uploads per month</p>
+                  <p className="text-sm mt-1">Upload your first report to start tracking!</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </FadeIn>
+
+        {/* Features Card */}
+        <FadeIn delay={0.3}>
+          <Card>
+            <CardHeader>
+              <CardTitle>What's Included</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                {[
+                  '5 report uploads per month',
+                  'AI-powered health analysis',
+                  'Trend tracking & visualization',
+                  'Family member profiles',
+                  'Secure encrypted storage',
+                  'Shareable report links'
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-primary" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </FadeIn>
+      </div>
     </div>
   );
 }

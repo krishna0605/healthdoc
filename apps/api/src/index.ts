@@ -34,7 +34,7 @@ import { userRoutes } from './modules/users/routes.js'
 import { familyRoutes } from './modules/family/routes.js'
 import { twoFactorRoutes } from './modules/auth/twoFactorRoutes.js'
 import { auditRoutes } from './modules/audit/routes.js'
-import { paymentRoutes } from './modules/payment/payment.routes.js'
+// Payment module removed - app is now free with upload limits
 import { initReportWorker } from './workers/reportWorker.js'
 
 // ... existing code ...
@@ -48,7 +48,7 @@ const start = async () => {
     await fastify.register(familyRoutes, { prefix: '/api/family' })
     await fastify.register(twoFactorRoutes, { prefix: '/api/auth/2fa' })
     await fastify.register(auditRoutes, { prefix: '/api/audit' })
-    await fastify.register(paymentRoutes, { prefix: '/api/payment' })
+    // Payment routes removed - app is free
 
     // Start Workers (optional - gracefully handle Redis unavailability)
     try {
