@@ -60,20 +60,8 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
   const handleUpload = async () => {
     if (!file || !user) return
 
-    // CHECK PRICING LIMITS
-    const PLAN_LIMITS = {
-      BASIC: 10,
-      PRO: Infinity,
-      FAMILY: Infinity
-    }
-    const currentTier = (user as any).planTier || 'BASIC'
-    const currentCount = (user as any).monthlyUploadCount || 0
-    const limit = PLAN_LIMITS[currentTier as keyof typeof PLAN_LIMITS] || 10
-
-    if (currentCount >= limit) {
-      setError(`You have reached your monthly limit of ${limit} uploads. Upgrade to Pro for unlimited uploads.`)
-      return
-    }
+    // Upload limit is now enforced by the backend API (5/month free tier)
+    // If limit reached, the API will return a 429 error with a proper message
 
     setUploadState('uploading')
     setProgress(0)

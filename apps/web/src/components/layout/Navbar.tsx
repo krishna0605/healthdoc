@@ -23,7 +23,6 @@ export const Navbar: React.FC = () => {
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-10">
           <Link className="text-sm font-medium text-text-main dark:text-gray-300 hover:text-primary transition-colors" href="/features">Features</Link>
-          <Link className="text-sm font-medium text-text-main dark:text-gray-300 hover:text-primary transition-colors" href="/pricing">Pricing</Link>
           <Link className="text-sm font-medium text-text-main dark:text-gray-300 hover:text-primary transition-colors" href="/about">About</Link>
         </div>
         <div className="hidden md:flex items-center gap-4">
@@ -45,7 +44,6 @@ export const Navbar: React.FC = () => {
       {isMenuOpen && (
         <div className="md:hidden absolute top-20 left-0 w-full bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shadow-xl p-6 flex flex-col gap-4 animate-in slide-in-from-top-4">
           <Link className="text-lg font-medium text-text-main dark:text-gray-200" href="/features">Features</Link>
-          <Link className="text-lg font-medium text-text-main dark:text-gray-200" href="/pricing">Pricing</Link>
           <Link className="text-lg font-medium text-text-main dark:text-gray-200" href="/about">About</Link>
           <div className="h-px bg-gray-100 dark:bg-gray-800 my-2"></div>
           <Link href="/login" className="w-full text-center font-bold text-text-main dark:text-white py-3 border border-gray-200 dark:border-gray-700 rounded-xl">Login</Link>
