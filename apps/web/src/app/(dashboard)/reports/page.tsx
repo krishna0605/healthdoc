@@ -116,14 +116,20 @@ export default function ReportsPage() {
         
         if (res.ok) {
           const data = await res.json();
-          if (data.usage?.monthlyUploadCount >= data.limit?.uploadLimit) {
+          const used = data.usage?.monthlyUploadCount || 0;
+          const limit = data.limit?.uploadLimit || 5;
+          
+          // Always set quota info for the counter display
+          setQuotaInfo({
+            used,
+            limit,
+            resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString()
+          });
+          
+          // Check if quota is reached
+          if (used >= limit) {
             setQuotaReached(true);
             setShowQuotaModal(true);
-            setQuotaInfo({
-              used: data.usage.monthlyUploadCount,
-              limit: data.limit.uploadLimit,
-              resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString()
-            });
           }
         }
       } catch (err) {
@@ -136,6 +142,17 @@ export default function ReportsPage() {
   // Handle file uploads immediately when added
   useEffect(() => {
     const uploadPendingFiles = async () => {
+      // Don't upload if quota is reached
+      if (quotaReached) {
+        // Remove any pending files and show modal
+        const hasPending = uploadedFiles.some(f => f.status === 'pending');
+        if (hasPending) {
+          setUploadedFiles(prev => prev.filter(f => f.status !== 'pending'));
+          setShowQuotaModal(true);
+        }
+        return;
+      }
+
       const pendingFiles = uploadedFiles.filter(f => f.status === 'pending');
       
       if (pendingFiles.length === 0) return;
@@ -203,6 +220,11 @@ export default function ReportsPage() {
 
   const handleFilesSelected = (files: FileList | null) => {
     if (!files) return;
+    // Block file selection if quota is reached
+    if (quotaReached) {
+      setShowQuotaModal(true);
+      return;
+    }
     const newFiles = Array.from(files).map(file => ({
       id: Math.random().toString(36).substring(7),
       file,
@@ -307,6 +329,25 @@ export default function ReportsPage() {
         <div>
           <h1 className="text-4xl font-black mb-2 dark:text-white">Upload Medical Report</h1>
           <p className="text-text-muted dark:text-gray-400">Our AI will process your documents and provide simplified insights.</p>
+          
+          {/* Quota Counter */}
+          {quotaInfo && (
+            <div className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+              quotaReached 
+                ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
+                : quotaInfo.used >= quotaInfo.limit - 1
+                  ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                  : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800'
+            }`}>
+              <span className="material-symbols-outlined text-base">upload_file</span>
+              <span>
+                {quotaReached 
+                  ? `No uploads remaining (${quotaInfo.used}/${quotaInfo.limit})` 
+                  : `${quotaInfo.limit - quotaInfo.used} of ${quotaInfo.limit} uploads remaining`
+                }
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="hidden md:flex items-center gap-4 text-sm font-bold">
