@@ -1,6 +1,4 @@
-'use client'
-
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { API_URL } from '@/lib/api' 
 import { Bell, X, CheckCheck, FileText, AlertTriangle } from 'lucide-react'
@@ -23,6 +21,7 @@ export function NotificationBell() {
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
   const router = useRouter()
+  const bellRef = useRef<HTMLDivElement>(null)
 
   const fetchNotifications = async () => {
     try {
@@ -52,6 +51,22 @@ export function NotificationBell() {
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
   }, [])
+
+  // Close on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
 
   const markAsRead = async (id: string) => {
     try {
@@ -115,7 +130,7 @@ export function NotificationBell() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={bellRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -129,24 +144,16 @@ export function NotificationBell() {
       </button>
 
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setIsOpen(false)} 
-          />
-          
-          {/* Dropdown */}
-          <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden ring-1 ring-black/5">
             {/* Header */}
             <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-900">
               <h3 className="font-bold text-gray-900 dark:text-white">Notifications</h3>
               {unreadCount > 0 && (
                 <button 
                   onClick={markAllAsRead}
-                  className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium"
+                  className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
                 >
-                  <CheckCheck className="w-3.5 h-3.5" />
+                  <CheckCheck className="w-3.5 h-3.5 text-primary" />
                   Mark all read
                 </button>
               )}
@@ -196,7 +203,7 @@ export function NotificationBell() {
               )}
             </div>
           </div>
-        </>
+
       )}
     </div>
   )

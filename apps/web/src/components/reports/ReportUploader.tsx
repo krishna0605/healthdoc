@@ -25,6 +25,53 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
   const [file, setFile] = useState<File | null>(null)
   const { members, activeMember } = useFamilyContext()
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)
+  const [analysisStarted, setAnalysisStarted] = useState(false)
+  
+  // Quota state
+  const [quotaReached, setQuotaReached] = useState(false)
+  const [quotaInfo, setQuotaInfo] = useState<{used: number, limit: number, resetDate: string} | null>(null)
+  const [checkingQuota, setCheckingQuota] = useState(true)
+
+  const { user } = useAuth()
+  
+  // Check quota on mount
+  React.useEffect(() => {
+    async function checkQuota() {
+      if (!user) {
+        setCheckingQuota(false)
+        return
+      }
+      try {
+        setCheckingQuota(true)
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (session) {
+          const res = await fetch(`${API_URL}/api/user/usage`, {
+            headers: { 'Authorization': `Bearer ${session.access_token}` }
+          })
+          
+          if (res.ok) {
+            const data = await res.json()
+            if (data.usage?.monthlyUploadCount >= data.limit?.uploadLimit) {
+              setQuotaReached(true)
+              setQuotaInfo({
+                used: data.usage.monthlyUploadCount,
+                limit: data.limit.uploadLimit,
+                resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString()
+              })
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to check quota:', err)
+      } finally {
+        setCheckingQuota(false)
+      }
+    }
+    
+    checkQuota()
+  }, [user])
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const selectedFile = acceptedFiles[0]
@@ -43,6 +90,7 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
     },
     maxFiles: 1,
     maxSize: 10 * 1024 * 1024, // 10MB
+    disabled: analysisStarted || quotaReached,
     onDropRejected: (rejections) => {
       const rejection = rejections[0]
       if (rejection.errors[0]?.code === 'file-too-large') {
@@ -55,14 +103,12 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
     },
   })
 
-  const { user } = useAuth() // Use the updated hook
+
   
   const handleUpload = async () => {
     if (!file || !user) return
 
-    // Upload limit is now enforced by the backend API (5/month free tier)
-    // If limit reached, the API will return a 429 error with a proper message
-
+    setAnalysisStarted(true)
     setUploadState('uploading')
     setProgress(0)
 
@@ -100,6 +146,9 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
       })
       
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('Monthly upload quota reached.')
+        }
         let errorMessage = `API Error: ${response.status}`
         try {
           const errorData = await response.json()
@@ -124,6 +173,7 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
         setFile(null)
         setUploadState('idle')
         setProgress(0)
+        setAnalysisStarted(false)
       }, 2000)
 
     } catch (err: any) {
@@ -134,13 +184,44 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
         setError(err.message || 'Failed to upload file')
       }
       setUploadState('error')
+      setAnalysisStarted(false)
     }
   }
 
   const handleRemove = () => {
+    if (analysisStarted) return // Cannot remove if started
     setFile(null)
-    setError(null)
     setUploadState('idle')
+    setError(null)
+    setAnalysisStarted(false)
+  }
+
+  if (checkingQuota) {
+    return (
+       <div className={cn("flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-[2rem]", className)}>
+         <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
+         <p className="text-gray-500">Checking quota...</p>
+       </div>
+    )
+  }
+
+  // Quota Reached View
+  if (quotaReached && quotaInfo) {
+    return (
+      <div className={cn("bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 p-8 text-center shadow-lg", className)}>
+        <div className="size-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span className="text-2xl">📊</span>
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Monthly Upload Limit Reached</h3>
+        <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+          You've used all <span className="font-bold text-gray-900 dark:text-white">{quotaInfo.limit} free uploads</span> this month. 
+          Your quota will reset on <span className="font-bold text-primary">{quotaInfo.resetDate}</span>.
+        </p>
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300">
+           Usage: {quotaInfo.used}/{quotaInfo.limit}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -271,11 +352,14 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
             )}
 
             {/* Upload form */}
-            {file && uploadState === 'idle' && (
+            {file && (uploadState === 'idle' || uploadState === 'uploading') && (
               <div className="mt-6 space-y-4">
                 {/* Family Member Selector */}
                 {members.length > 0 && (
-                  <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                  <div className={cn(
+                    "flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm transition-opacity",
+                    analysisStarted && "opacity-60 pointer-events-none"
+                  )}>
                     <div className="p-3 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl text-indigo-500">
                        <Users className="w-5 h-5" />
                     </div>
@@ -284,7 +368,8 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
                       <select
                         value={selectedMemberId || activeMember?.id || ''}
                         onChange={(e) => setSelectedMemberId(e.target.value)}
-                        className="w-full bg-transparent border-none p-0 text-sm font-bold text-gray-800 dark:text-white focus:ring-0 cursor-pointer"
+                        disabled={analysisStarted}
+                        className="w-full bg-transparent border-none p-0 text-sm font-bold text-gray-800 dark:text-white focus:ring-0 cursor-pointer disabled:cursor-not-allowed"
                       >
                         {members.map(m => (
                           <option key={m.id} value={m.id}>
@@ -300,9 +385,19 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
                   onClick={handleUpload}
                   className="w-full h-14 rounded-2xl text-base font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all hover:scale-[1.02]"
                   size="lg"
+                  disabled={analysisStarted}
                 >
-                  <Upload className="h-5 w-5 mr-2" />
-                  Upload & Start Analysis
+                  {analysisStarted ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-5 w-5 mr-2" />
+                      Upload & Start Analysis
+                    </>
+                  )}
                 </Button>
               </div>
             )}
