@@ -31,6 +31,7 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
   const [quotaReached, setQuotaReached] = useState(false)
   const [quotaInfo, setQuotaInfo] = useState<{used: number, limit: number, resetDate: string} | null>(null)
   const [checkingQuota, setCheckingQuota] = useState(true)
+  const [showQuotaPopup, setShowQuotaPopup] = useState(false)
 
   const { user } = useAuth()
   
@@ -55,6 +56,7 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
             const data = await res.json()
             if (data.usage?.monthlyUploadCount >= data.limit?.uploadLimit) {
               setQuotaReached(true)
+              setShowQuotaPopup(true)
               setQuotaInfo({
                 used: data.usage.monthlyUploadCount,
                 limit: data.limit.uploadLimit,
@@ -205,27 +207,61 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
     )
   }
 
-  // Quota Reached View
-  if (quotaReached && quotaInfo) {
-    return (
-      <div className={cn("bg-white dark:bg-gray-800 rounded-[2rem] border border-gray-100 dark:border-gray-700 p-8 text-center shadow-lg", className)}>
-        <div className="size-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span className="text-2xl">📊</span>
-        </div>
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Monthly Upload Limit Reached</h3>
-        <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
-          You've used all <span className="font-bold text-gray-900 dark:text-white">{quotaInfo.limit} free uploads</span> this month. 
-          Your quota will reset on <span className="font-bold text-primary">{quotaInfo.resetDate}</span>.
-        </p>
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300">
-           Usage: {quotaInfo.used}/{quotaInfo.limit}
-        </div>
-      </div>
-    )
-  }
 
   return (
-    <div className={cn('w-full', className)}>
+    <div className={cn('w-full relative', className)}>
+      {/* Quota Limit Modal Popup */}
+      <AnimatePresence>
+        {showQuotaPopup && quotaInfo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowQuotaPopup(false)}
+            />
+            {/* Modal Content */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-8 text-center shadow-2xl max-w-md w-full"
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setShowQuotaPopup(false)}
+                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              
+              <div className="size-16 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-3xl">⚠️</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Monthly Upload Limit Reached</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                You've used all <span className="font-bold text-gray-900 dark:text-white">{quotaInfo.limit} free uploads</span> this month. 
+                Your quota will reset on <span className="font-bold text-primary">{quotaInfo.resetDate}</span>.
+              </p>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 mb-6">
+                Usage: {quotaInfo.used}/{quotaInfo.limit}
+              </div>
+              <Button
+                onClick={() => setShowQuotaPopup(false)}
+                variant="outline"
+                className="w-full rounded-xl"
+              >
+                Got it
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div
         {...getRootProps()}
         className={cn(
@@ -233,7 +269,8 @@ export function ReportUploader({ onUploadComplete, className }: ReportUploaderPr
           isDragActive
             ? 'border-primary bg-primary/5 shadow-[0_0_30px_rgba(14,165,233,0.15)] scale-[1.01]'
             : 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 hover:border-primary/50 hover:bg-white dark:hover:bg-gray-800 hover:shadow-xl hover:shadow-primary/5 hover:scale-[1.005]',
-          file && 'border-solid border-primary/20 bg-primary/5'
+          file && 'border-solid border-primary/20 bg-primary/5',
+          quotaReached && 'opacity-50 pointer-events-none'
         )}
       >
         <input {...getInputProps()} />
