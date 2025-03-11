@@ -3,13 +3,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Info, Plus, FileText, Trash2, CheckCircle, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { Info, Plus, FileText, Trash2, CheckCircle, AlertCircle, RefreshCw, Loader2, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useFamilyMembers, initFamilyProfile } from '@/hooks/useFamilyMembers';
 import { createReport } from '@/hooks/useReports';
 import { useReportStatus } from '@/hooks/useReportStatus';
 import { createClient } from '@/lib/supabase/client';
 import { Tooltip } from '@/components/ui/tooltip';
+import { API_URL } from '@/lib/api';
 import type { ReportStatus } from '@/types';
 
 interface FileWithProgress {
@@ -33,6 +34,13 @@ export default function ReportsPage() {
   
   const [analyzingReportId, setAnalyzingReportId] = useState<string | null>(null);
   const { status: reportStatus, error: reportError } = useReportStatus(analyzingReportId, 'UPLOADED');
+
+  // Quota and Modal state
+  const [quotaReached, setQuotaReached] = useState(false);
+  const [quotaInfo, setQuotaInfo] = useState<{used: number, limit: number, resetDate: string} | null>(null);
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Monitor analysis status
   useEffect(() => {
@@ -68,7 +76,8 @@ export default function ReportsPage() {
     } else if (reportStatus === 'FAILED') {
       setIsProcessing(false);
       setAnalyzingReportId(null);
-      alert('Report analysis failed. Please try again.');
+      setErrorMessage('Report analysis failed. Please try again.');
+      setShowErrorModal(true);
     }
   }, [reportStatus, analyzingReportId, router]);
 
@@ -93,6 +102,36 @@ export default function ReportsPage() {
       setSelectedPatient(defaultMember.id);
     }
   }, [membersLoading, members, selectedPatient, refetch]);
+
+  // Check quota on mount
+  useEffect(() => {
+    async function checkQuota() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        
+        const res = await fetch(`${API_URL}/api/user/usage`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (data.usage?.monthlyUploadCount >= data.limit?.uploadLimit) {
+            setQuotaReached(true);
+            setShowQuotaModal(true);
+            setQuotaInfo({
+              used: data.usage.monthlyUploadCount,
+              limit: data.limit.uploadLimit,
+              resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString()
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to check quota:', err);
+      }
+    }
+    checkQuota();
+  }, [supabase]);
 
   // Handle file uploads immediately when added
   useEffect(() => {
@@ -204,7 +243,8 @@ export default function ReportsPage() {
     const completedFiles = uploadedFiles.filter(f => f.status === 'completed');
     
     if (completedFiles.length === 0) {
-      alert('Please wait for files to finish uploading.');
+      setErrorMessage('Please wait for files to finish uploading.');
+      setShowErrorModal(true);
       return;
     }
 
@@ -254,7 +294,8 @@ export default function ReportsPage() {
       
     } catch (error) {
       console.error('Analysis failed:', error);
-      alert('Failed to start analysis. Please try again.');
+      setErrorMessage('Failed to start analysis. Please try again.');
+      setShowErrorModal(true);
       setIsProcessing(false);
     }
   };
@@ -324,17 +365,38 @@ export default function ReportsPage() {
         {/* Left Column: Upload & Form */}
         <div className="lg:col-span-2 space-y-8">
           {/* Uploader */}
-          <Tooltip content="Drag & drop your medical reports here">
+          <Tooltip content={quotaReached ? "Upload limit reached" : "Drag & drop your medical reports here"}>
             <div 
-              className={`bg-white dark:bg-gray-800 p-10 rounded-[2rem] border-2 border-dashed transition-all cursor-pointer ${
-                isDragOver 
-                  ? 'border-primary bg-primary/5' 
-                  : 'border-gray-200 dark:border-gray-600 hover:border-primary'
+              className={`bg-white dark:bg-gray-800 p-10 rounded-[2rem] border-2 border-dashed transition-all ${
+                quotaReached || isProcessing
+                  ? 'border-gray-300 dark:border-gray-700 opacity-60 cursor-not-allowed'
+                  : isDragOver 
+                    ? 'border-primary bg-primary/5 cursor-pointer' 
+                    : 'border-gray-200 dark:border-gray-600 hover:border-primary cursor-pointer'
               }`}
-              onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+              onDragOver={(e) => { 
+                e.preventDefault(); 
+                if (!quotaReached && !isProcessing) setIsDragOver(true); 
+              }}
               onDragLeave={() => setIsDragOver(false)}
-              onDrop={handleDrop}
-              onClick={() => document.getElementById('file-input')?.click()}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+                if (quotaReached) {
+                  setShowQuotaModal(true);
+                  return;
+                }
+                if (isProcessing) return;
+                handleFilesSelected(e.dataTransfer.files);
+              }}
+              onClick={() => {
+                if (quotaReached) {
+                  setShowQuotaModal(true);
+                  return;
+                }
+                if (isProcessing) return;
+                document.getElementById('file-input')?.click();
+              }}
             >
               <input 
                 id="file-input"
@@ -342,16 +404,31 @@ export default function ReportsPage() {
                 className="hidden" 
                 multiple 
                 accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => handleFilesSelected(e.target.files)}
+                disabled={quotaReached || isProcessing}
+                onChange={(e) => {
+                  if (quotaReached) {
+                    setShowQuotaModal(true);
+                    return;
+                  }
+                  handleFilesSelected(e.target.files);
+                }}
               />
               <div className="flex flex-col items-center justify-center py-8">
                 <div className={`size-20 rounded-full flex items-center justify-center mb-6 transition-all ${
-                  isDragOver ? 'bg-primary text-white scale-110' : 'bg-primary/10 text-primary'
+                  quotaReached || isProcessing
+                    ? 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
+                    : isDragOver 
+                      ? 'bg-primary text-white scale-110' 
+                      : 'bg-primary/10 text-primary'
                 }`}>
                   <span className="material-symbols-outlined text-4xl">cloud_upload</span>
                 </div>
-                <h3 className="text-2xl font-bold mb-2 dark:text-white">Drop files here or click to browse</h3>
-                <p className="text-text-muted dark:text-gray-400 text-sm">Supports PDF, JPG, PNG up to 50MB</p>
+                <h3 className="text-2xl font-bold mb-2 dark:text-white">
+                  {quotaReached ? 'Upload Limit Reached' : isProcessing ? 'Processing...' : 'Drop files here or click to browse'}
+                </h3>
+                <p className="text-text-muted dark:text-gray-400 text-sm">
+                  {quotaReached ? 'You\'ve reached your monthly upload limit' : 'Supports PDF, JPG, PNG up to 50MB'}
+                </p>
               </div>
             </div>
           </Tooltip>
@@ -424,10 +501,11 @@ export default function ReportsPage() {
 
           {/* Report Details Form - Shows after files are uploaded */}
           {uploadedFiles.length > 0 && uploadedFiles.some(f => f.status === 'completed') && (
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className={`bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300 ${isProcessing ? 'opacity-60' : ''}`}>
               <h3 className="text-lg font-bold mb-6 dark:text-white flex items-center gap-2">
                 <FileText className="size-5 text-primary" />
                 Report Details
+                {isProcessing && <span className="text-xs font-normal text-amber-600 dark:text-amber-400 ml-2">(Locked during analysis)</span>}
               </h3>
               
               <div className="space-y-5">
@@ -443,7 +521,8 @@ export default function ReportsPage() {
                     value={reportTitle}
                     onChange={(e) => setReportTitle(e.target.value)}
                     placeholder={uploadedFiles[0]?.file.name.replace(/\.[^/.]+$/, "") || "Enter report title"}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-text-main dark:text-white"
+                    disabled={isProcessing}
+                    className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-text-main dark:text-white ${isProcessing ? 'cursor-not-allowed opacity-60' : ''}`}
                   />
                   <p className="text-xs text-text-muted mt-2">Give your report a descriptive name</p>
                 </div>
@@ -459,33 +538,46 @@ export default function ReportsPage() {
                     type="date"
                     value={reportDate}
                     onChange={(e) => setReportDate(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-text-main dark:text-white"
+                    disabled={isProcessing}
+                    className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-text-main dark:text-white ${isProcessing ? 'cursor-not-allowed opacity-60' : ''}`}
                   />
                   <p className="text-xs text-text-muted mt-2">When was this report generated?</p>
                 </div>
               </div>
 
-              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl flex gap-3 border border-blue-100 dark:border-blue-800/30">
-                <Info className="size-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                <p className="text-sm text-blue-600 dark:text-blue-400">
-                  If left empty, our AI will extract the title and date from the document during analysis.
-                </p>
-              </div>
+              {isProcessing && (
+                <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl flex gap-3 border border-amber-100 dark:border-amber-800/30">
+                  <AlertCircle className="size-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-sm text-amber-600 dark:text-amber-400">
+                    Report details are locked while analysis is in progress.
+                  </p>
+                </div>
+              )}
+
+              {!isProcessing && (
+                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl flex gap-3 border border-blue-100 dark:border-blue-800/30">
+                  <Info className="size-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                    If left empty, our AI will extract the title and date from the document during analysis.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Right Column: Patient & Info */}
         <div className="space-y-8">
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className={`bg-white dark:bg-gray-800 p-8 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-700 ${isProcessing ? 'opacity-60' : ''}`}>
             <h3 className="text-lg font-bold mb-6 dark:text-white flex items-center gap-2">
               Patient Selection
               <Tooltip content="Select who this report belongs to">
                 <Info className="size-4 text-gray-400" />
               </Tooltip>
+              {isProcessing && <span className="text-xs font-normal text-amber-600 dark:text-amber-400 ml-2">(Locked)</span>}
             </h3>
             
-            <div className="space-y-4 mb-8">
+            <div className={`space-y-4 mb-8 ${isProcessing ? 'pointer-events-none' : ''}`}>
               {membersLoading ? (
                 // Loading skeleton
                 Array.from({ length: 2 }).map((_, i) => (
@@ -501,7 +593,11 @@ export default function ReportsPage() {
                 members.map((member) => (
                   <label 
                     key={member.id}
-                    className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all ${selectedPatient === member.id ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'}`}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${
+                      isProcessing 
+                        ? 'cursor-not-allowed'
+                        : 'cursor-pointer'
+                    } ${selectedPatient === member.id ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'}`}
                   >
                     <div 
                       className="size-12 rounded-full flex items-center justify-center text-white"
@@ -523,8 +619,9 @@ export default function ReportsPage() {
                       type="radio" 
                       name="patient" 
                       className="hidden" 
-                      onChange={() => setSelectedPatient(member.id)} 
-                      checked={selectedPatient === member.id} 
+                      onChange={() => !isProcessing && setSelectedPatient(member.id)} 
+                      checked={selectedPatient === member.id}
+                      disabled={isProcessing}
                     />
                   </label>
                 ))
@@ -575,6 +672,74 @@ export default function ReportsPage() {
           )}
         </button>
       </div>
+
+      {/* Quota Limit Modal */}
+      {showQuotaModal && quotaInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowQuotaModal(false)}
+          />
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-8 text-center shadow-2xl max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setShowQuotaModal(false)}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            <div className="size-16 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-3xl">⚠️</span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Monthly Upload Limit Reached</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              You've used all <span className="font-bold text-gray-900 dark:text-white">{quotaInfo.limit} free uploads</span> this month. 
+              Your quota will reset on <span className="font-bold text-primary">{quotaInfo.resetDate}</span>.
+            </p>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 mb-6">
+              Usage: {quotaInfo.used}/{quotaInfo.limit}
+            </div>
+            <button
+              onClick={() => setShowQuotaModal(false)}
+              className="w-full py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowErrorModal(false)}
+          />
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-8 text-center shadow-2xl max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setShowErrorModal(false)}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            <div className="size-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="size-8 text-red-500" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Something Went Wrong</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              {errorMessage}
+            </p>
+            <button
+              onClick={() => setShowErrorModal(false)}
+              className="w-full py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
