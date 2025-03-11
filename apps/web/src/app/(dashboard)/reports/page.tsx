@@ -116,14 +116,16 @@ export default function ReportsPage() {
         
         if (res.ok) {
           const data = await res.json();
-          const used = data.usage?.monthlyUploadCount || 0;
-          const limit = data.limit?.uploadLimit || 5;
+          // API returns: { limit, used, remaining, resetDate, daysUntilReset }
+          const used = data.used || 0;
+          const limit = data.limit || 5;
+          const resetDate = data.resetDate ? new Date(data.resetDate).toLocaleDateString() : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString();
           
           // Always set quota info for the counter display
           setQuotaInfo({
             used,
             limit,
-            resetDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString()
+            resetDate
           });
           
           // Check if quota is reached
@@ -517,8 +519,9 @@ export default function ReportsPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {item.status === 'error' && (
+                  {/* Only show retry button for failed uploads - no delete button */}
+                  {item.status === 'error' && (
+                    <div className="flex items-center gap-2">
                       <button 
                         onClick={() => retryFile(item.id)}
                         className="size-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shrink-0"
@@ -526,15 +529,8 @@ export default function ReportsPage() {
                       >
                         <RefreshCw className="size-4" />
                       </button>
-                    )}
-                    <button 
-                      onClick={() => removeFile(item.id)}
-                      className="size-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
-                      title="Remove file"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
