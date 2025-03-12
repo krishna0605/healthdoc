@@ -33,6 +33,7 @@ import { publicReportRoutes } from './modules/reports/publicRoutes.js'
 import { userRoutes } from './modules/users/routes.js'
 import { familyRoutes } from './modules/family/routes.js'
 import { twoFactorRoutes } from './modules/auth/twoFactorRoutes.js'
+import preAuthRoutes from './modules/auth/preAuthRoutes.js'
 import { auditRoutes } from './modules/audit/routes.js'
 // Payment module removed - app is now free with upload limits
 import { initReportWorker } from './workers/reportWorker.js'
@@ -47,6 +48,7 @@ const start = async () => {
     await fastify.register(userRoutes, { prefix: '/api/user' })
     await fastify.register(familyRoutes, { prefix: '/api/family' })
     await fastify.register(twoFactorRoutes, { prefix: '/api/auth/2fa' })
+    await fastify.register(preAuthRoutes, { prefix: '/api/auth' })
     await fastify.register(auditRoutes, { prefix: '/api/audit' })
     // Payment routes removed - app is free
 
