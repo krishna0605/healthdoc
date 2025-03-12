@@ -3,32 +3,27 @@
 import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { api } from '@/lib/api'
-// import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useAuth } from '@/hooks/useAuth'
-
-import { Logo } from '@/components/ui/Logo';
+import { Logo } from '@/components/ui/Logo'
 
 
 function LoginForm() {
   const router = useRouter()
-  // const searchParams = useSearchParams() // Causing Error #310
   const [redirectTo, setRedirectTo] = useState('/dashboard')
   
-  /* Hook order fix: all hooks must be called before any conditional return */
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const { user, isLoading: isAuthLoading } = useAuth()
 
-  /* Effects */
   useEffect(() => {
-    // Client-side only params reading to avoid Suspense issues
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       setRedirectTo(params.get('redirectTo') || '/dashboard')
@@ -41,7 +36,6 @@ function LoginForm() {
     }
   }, [user, router, redirectTo])
 
-  /* Conditional render happens AFTER all hooks */
   if (isAuthLoading || user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
@@ -166,19 +160,31 @@ function LoginForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-text-main dark:text-gray-200 mb-2">Password</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-bold text-text-main dark:text-gray-200">Password</label>
+                <Link href="/auth/forgot-password" className="text-xs text-primary hover:underline font-medium">
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
                   <span className="material-symbols-outlined text-[20px]">lock</span>
                 </div>
                 <input 
-                  type="password" 
-                  placeholder="........"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-text-main dark:text-white placeholder:text-gray-400 font-medium"
+                  className="w-full pl-11 pr-12 py-3.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-text-main dark:text-white placeholder:text-gray-400 font-medium"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                </button>
               </div>
             </div>
 

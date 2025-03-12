@@ -1,12 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useAuth } from '@/hooks'
+import { useSessionTimeout } from '@/hooks/useSessionTimeout'
 import { FamilyProvider, FamilyProfileSwitcher } from '@/components/family'
 import { NotificationBell } from '@/components/notifications'
 import { SearchBar } from '@/components/dashboard/SearchBar'
+import { SignOutModal, SessionTimeoutModal } from '@/components/auth'
 
 
 function DashboardLayoutInner({
@@ -16,10 +19,33 @@ function DashboardLayoutInner({
 }) {
   const router = useRouter()
   const { user, signOut } = useAuth()
+  const [showSignOutModal, setShowSignOutModal] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
-  const handleSignOut = async () => {
+  // Session timeout - 30 minutes idle = auto logout, warn at 5 min remaining
+  const { isWarningVisible, remainingSeconds, extendSession } = useSessionTimeout({
+    timeoutMinutes: 30,
+    warningMinutes: 5,
+  })
+
+  const handleSignOutClick = () => {
+    setShowSignOutModal(true)
+  }
+
+  const handleConfirmSignOut = async () => {
+    setIsSigningOut(true)
+    try {
+      await signOut()
+      // signOut now handles the redirect internally
+    } catch (error) {
+      console.error('Sign out failed:', error)
+      setIsSigningOut(false)
+      setShowSignOutModal(false)
+    }
+  }
+
+  const handleTimeoutLogout = async () => {
     await signOut()
-    router.push('/login')
   }
 
   // Get user initials for avatar
@@ -55,7 +81,7 @@ function DashboardLayoutInner({
             {/* Sign Out Button */}
             <button 
               className="flex items-center justify-center size-10 rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-              onClick={handleSignOut}
+              onClick={handleSignOutClick}
               title="Sign Out"
             >
               <span className="material-symbols-outlined text-xl">logout</span>
@@ -68,6 +94,22 @@ function DashboardLayoutInner({
           {children}
         </main>
       </div>
+
+      {/* Sign Out Confirmation Modal */}
+      <SignOutModal
+        isOpen={showSignOutModal}
+        onClose={() => setShowSignOutModal(false)}
+        onConfirm={handleConfirmSignOut}
+        isLoading={isSigningOut}
+      />
+
+      {/* Session Timeout Warning Modal */}
+      <SessionTimeoutModal
+        isOpen={isWarningVisible}
+        remainingSeconds={remainingSeconds}
+        onExtend={extendSession}
+        onLogout={handleTimeoutLogout}
+      />
     </div>
   )
 }

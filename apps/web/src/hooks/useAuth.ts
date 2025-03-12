@@ -92,6 +92,9 @@ export function useAuth() {
   const signOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
+    
+    // Force navigation to login page to clear any stale state
+    window.location.href = '/login'
   }
 
   return { user, isLoading, signOut }

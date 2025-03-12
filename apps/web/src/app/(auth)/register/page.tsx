@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { api } from '@/lib/api'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
-
-import { Logo } from '@/components/ui/Logo';
+import { PasswordStrengthMeter, isPasswordValid, getPasswordRequirements } from '@/components/auth'
+import { Logo } from '@/components/ui/Logo'
 
 
 export default function RegisterPage() {
@@ -18,13 +18,23 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
+
+    // Validate terms agreement
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms of Service and Privacy Policy')
+      setIsLoading(false)
+      return
+    }
 
     // Validate passwords match
     if (password !== confirmPassword) {
@@ -33,9 +43,15 @@ export default function RegisterPage() {
       return
     }
 
-    // Validate password length
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+    // Validate password strength
+    if (!isPasswordValid(password)) {
+      const reqs = getPasswordRequirements(password)
+      const missing = []
+      if (!reqs.minLength) missing.push('8+ characters')
+      if (!reqs.hasLowercase) missing.push('lowercase letter')
+      if (!reqs.hasUppercase) missing.push('uppercase letter')
+      if (!reqs.hasNumber) missing.push('number')
+      setError(`Password requirements not met: ${missing.join(', ')}`)
       setIsLoading(false)
       return
     }
@@ -71,11 +87,10 @@ export default function RegisterPage() {
         }
       }
 
-      router.push('/dashboard')
-      router.refresh()
+      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`)
       
       // Log event (non-blocking)
-      api.logEvent('LOGIN', { method: 'register' })
+      api.logEvent('REGISTER', { method: 'email' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create account')
     } finally {
@@ -134,6 +149,7 @@ export default function RegisterPage() {
                <span className="font-bold text-sm text-text-main dark:text-white">Sign up with Google</span>
             </button>
           </div>
+
           <div className="relative mb-8">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
@@ -143,7 +159,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <form onSubmit={handleRegister} className="space-y-6">
+          <form onSubmit={handleRegister} className="space-y-5">
             <div>
               <label className="block text-sm font-bold text-text-main dark:text-gray-200 mb-2">Full Name</label>
               <div className="relative group">
@@ -185,14 +201,22 @@ export default function RegisterPage() {
                   <span className="material-symbols-outlined text-[20px]">lock</span>
                 </div>
                 <input 
-                  type="password" 
-                  placeholder="........"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Create a strong password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-text-main dark:text-white placeholder:text-gray-400 font-medium"
+                  className="w-full pl-11 pr-12 py-3.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-text-main dark:text-white placeholder:text-gray-400 font-medium"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                </button>
               </div>
+              <PasswordStrengthMeter password={password} />
             </div>
 
             <div>
@@ -202,14 +226,56 @@ export default function RegisterPage() {
                   <span className="material-symbols-outlined text-[20px]">lock</span>
                 </div>
                 <input 
-                  type="password" 
-                  placeholder="........"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Confirm your password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-text-main dark:text-white placeholder:text-gray-400 font-medium"
+                  className={`w-full pl-11 pr-12 py-3.5 bg-white dark:bg-gray-900 border rounded-xl focus:ring-2 focus:ring-primary/20 transition-all outline-none text-text-main dark:text-white placeholder:text-gray-400 font-medium ${
+                    confirmPassword && confirmPassword !== password 
+                      ? 'border-red-300 dark:border-red-700 focus:border-red-500' 
+                      : confirmPassword && confirmPassword === password
+                        ? 'border-green-300 dark:border-green-700 focus:border-green-500'
+                        : 'border-gray-200 dark:border-gray-700 focus:border-primary'
+                  }`}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                </button>
               </div>
+              {confirmPassword && confirmPassword !== password && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm">error</span>
+                  Passwords do not match
+                </p>
+              )}
+              {confirmPassword && confirmPassword === password && (
+                <p className="text-green-500 text-xs mt-1 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm">check_circle</span>
+                  Passwords match
+                </p>
+              )}
+            </div>
+
+            {/* Terms Agreement */}
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-1 size-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-300">
+                I agree to the{' '}
+                <Link href="/legal/terms" className="text-primary hover:underline">Terms of Service</Link>
+                {' '}and{' '}
+                <Link href="/legal/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+              </label>
             </div>
 
             {error && (
@@ -221,7 +287,7 @@ export default function RegisterPage() {
 
             <button 
               type="submit" 
-              disabled={isLoading}
+              disabled={isLoading || !agreedToTerms}
               className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -250,5 +316,5 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }
