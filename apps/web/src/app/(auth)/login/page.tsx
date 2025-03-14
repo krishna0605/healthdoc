@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
@@ -21,6 +21,9 @@ function LoginForm() {
   
   // Login step state
   const [step, setStep] = useState<LoginStep>('credentials')
+  
+  // Track if we are actively submitting the login form to prevent auto-redirect
+  const loginInProgress = useRef(false)
   
   // Credentials
   const [email, setEmail] = useState('')
@@ -47,22 +50,15 @@ function LoginForm() {
   useEffect(() => setIsMounted(true), [])
   
   useEffect(() => {
-    if (user && isMounted && !isAuthLoading) {
-      // Only redirect if we are NOT in the middle of a verification flow
-      // The user object exists, but we want to ensure we don't redirect 
-      // if the user is currently completing 2FA (step is 'totp' or 'email_otp')
-      // Note: We can't rely solely on 'step' because page refresh might reset it.
-      // Ideally, the session shouldn't be valid until 2FA is done.
-      // But since we have a valid session from 'signInWithPassword', we rely on
-      // the fact that we explicitly signOut if 2FA is required.
-      // The 'handleCredentialsSubmit' function handles the signOut.
-      
-      // However, to be safe and prevent flickering redirects:
-      if (step === 'credentials') {
-         router.push(redirectTo)
-      }
+    if (user && isMounted && !isAuthLoading && !loginInProgress.current) {
+      // Only redirect if:
+      // 1. User is authenticated
+      // 2. We are NOT currently in the middle of a login submission (checked via ref)
+      // This allows the handleCredentialsSubmit flow to handle the redirect manually
+      // after 2FA checks are complete.
+      router.push(redirectTo)
     }
-  }, [user, router, redirectTo, isMounted, isAuthLoading, step])
+  }, [user, router, redirectTo, isMounted, isAuthLoading])
 
   if (isAuthLoading || user) {
     return (
@@ -86,6 +82,7 @@ function LoginForm() {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
+    loginInProgress.current = true
 
     try {
       const supabase = createClient()
@@ -129,9 +126,14 @@ function LoginForm() {
         router.refresh()
       }
     } catch (err) {
+      console.error('Login error:', err) // Debug log
       setError(err instanceof Error ? err.message : 'Failed to sign in')
+      loginInProgress.current = false
     } finally {
       setIsLoading(false)
+      // Note: We don't reset loginInProgress here universally.
+      // If successful, we want it to remain true so the useEffect doesn't trigger.
+      // If we moved to step 'totp'/'email_otp', we've signed out, so user is null, effect won't trigger.
     }
   }
 
