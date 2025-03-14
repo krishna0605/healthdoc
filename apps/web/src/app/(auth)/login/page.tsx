@@ -42,11 +42,27 @@ function LoginForm() {
     }
   }, [])
   
+  // Check if component is mounted to prevent hydration mismatches
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => setIsMounted(true), [])
+  
   useEffect(() => {
-    if (user) {
-      router.push(redirectTo)
+    if (user && isMounted && !isAuthLoading) {
+      // Only redirect if we are NOT in the middle of a verification flow
+      // The user object exists, but we want to ensure we don't redirect 
+      // if the user is currently completing 2FA (step is 'totp' or 'email_otp')
+      // Note: We can't rely solely on 'step' because page refresh might reset it.
+      // Ideally, the session shouldn't be valid until 2FA is done.
+      // But since we have a valid session from 'signInWithPassword', we rely on
+      // the fact that we explicitly signOut if 2FA is required.
+      // The 'handleCredentialsSubmit' function handles the signOut.
+      
+      // However, to be safe and prevent flickering redirects:
+      if (step === 'credentials') {
+         router.push(redirectTo)
+      }
     }
-  }, [user, router, redirectTo])
+  }, [user, router, redirectTo, isMounted, isAuthLoading, step])
 
   if (isAuthLoading || user) {
     return (

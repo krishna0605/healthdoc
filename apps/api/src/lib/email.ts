@@ -91,3 +91,23 @@ export function abnormalResultsEmail(reportTitle: string, abnormalCount: number,
     `
   }
 }
+
+export function verificationCodeEmail(code: string): { subject: string; html: string } {
+  return {
+    subject: `Your Verification Code: ${code}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1e40af;">Your Verification Code</h2>
+        <p>Please use the following code to complete your sign in:</p>
+        <div style="background: #f3f4f6; padding: 24px; border-radius: 12px; text-align: center; margin: 24px 0;">
+          <span style="font-family: monospace; font-size: 32px; letter-spacing: 8px; font-weight: bold; color: #1f2937;">${code}</span>
+        </div>
+        <p style="color: #6b7280; font-size: 14px;">
+          This code will expire in 10 minutes. If you did not request this code, you can safely ignore this email.
+        </p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+        <p style="color: #9ca3af; font-size: 12px;">HealthDoc - Secure Authentication</p>
+      </div>
+    `
+  }
+}

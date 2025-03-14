@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js'
 import { createClient } from '@supabase/supabase-js'
 import { logAuditEvent, AuditActions } from '../../lib/auditService.js'
 import * as crypto from 'crypto'
+import { sendEmail, verificationCodeEmail } from '../../lib/email.js'
 
 // Rate limiting store (in production, use Redis)
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
@@ -134,19 +135,16 @@ export default async function preAuthRoutes(fastify: FastifyInstance) {
         attempts: 0
       })
 
-      // Send via Supabase OTP
-      const supabase = getSupabaseAdmin()
-      
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email,
-        options: {
-          shouldCreateUser: false,
-        }
+      // Send via custom email service (Resend)
+      const emailData = verificationCodeEmail(otp)
+      const emailSent = await sendEmail({
+        to: email,
+        subject: emailData.subject,
+        html: emailData.html
       })
 
-      if (error) {
-        console.error('Supabase OTP error:', error)
-        // Still continue - we have our own OTP stored
+      if (!emailSent) {
+        throw new Error('Failed to send email via service')
       }
 
       // Log the event
