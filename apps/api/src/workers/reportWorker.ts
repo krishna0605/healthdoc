@@ -152,73 +152,13 @@ export const initReportWorker = () => {
 
       // 5. Create In-App + Email Notifications
       try {
-        const prefs = await prisma.notificationPreference.findUnique({
-          where: { userId }
-        })
-        
+        const { notificationService } = await import('../services/notificationService.js')
         const abnormalCount = result.abnormalities?.length || 0
-        
-        // Check preferences (default to true if not set)
-        const notifyOnComplete = prefs?.emailOnComplete ?? true
-        const notifyOnAbnormal = prefs?.emailOnAbnormal ?? true
-        
-        // Get report title
-        const report = await prisma.report.findUnique({ where: { id: reportId } })
+        const report = await prisma.report.findUnique({ where: { id: reportId }, select: { title: true } })
         const reportTitle = report?.title || 'Health Report'
+
+        await notificationService.notifyReportReady(userId, reportId, reportTitle, abnormalCount)
         
-        // Get user email from Supabase Auth
-        let userEmail: string | undefined
-        if (supabaseAdmin) {
-          const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId)
-          userEmail = userData?.user?.email
-        }
-        
-        const fullReportUrl = `${process.env.APP_URL || 'http://localhost:3000'}/reports/${reportId}`
-        const reportUrl = `/reports/${reportId}`
-        
-        // Create "Report Ready" notification + email
-        if (notifyOnComplete) {
-          // In-app notification
-          await prisma.notification.create({
-            data: {
-              userId,
-              type: 'report_ready',
-              title: 'Report Analysis Complete',
-              message: `Your report "${reportTitle}" has been analyzed and is ready to view.`,
-              link: reportUrl
-            }
-          })
-          console.log(`[Worker] Created in-app notification for user ${userId}`)
-          
-          // Email notification
-          if (userEmail) {
-            const email = reportReadyEmail(reportTitle, fullReportUrl)
-            await sendEmail({ to: userEmail, ...email })
-            console.log(`[Worker] Sent email to ${userEmail}`)
-          }
-        }
-        
-        // Create "Abnormal Values" notification + email if applicable
-        if (notifyOnAbnormal && abnormalCount > 0) {
-          // In-app notification
-          await prisma.notification.create({
-            data: {
-              userId,
-              type: 'abnormal_alert',
-              title: '⚠️ Abnormal Values Detected',
-              message: `Your report "${reportTitle}" has ${abnormalCount} abnormal value(s). Please review.`,
-              link: reportUrl
-            }
-          })
-          console.log(`[Worker] Created abnormal alert notification for user ${userId}`)
-          
-          // Email notification
-          if (userEmail) {
-            const email = abnormalResultsEmail(reportTitle, abnormalCount, fullReportUrl)
-            await sendEmail({ to: userEmail, ...email })
-            console.log(`[Worker] Sent abnormal alert email to ${userEmail}`)
-          }
-        }
       } catch (notifError) {
         console.warn(`[Worker] Notification/email failed:`, notifError)
         // Don't fail the job if notification fails

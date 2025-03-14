@@ -196,6 +196,15 @@ export async function reportRoutes(fastify: FastifyInstance) {
         where: { id: report.id },
         include: { analysis: true }
       })
+
+      // NOTIFY: Ensure user gets email even in fallback mode
+      try {
+        const { notificationService } = await import('../../services/notificationService.js')
+        // In demo mode, abnormalCount is 0, but we still send "Ready" email
+        await notificationService.notifyReportReady(user.id, report.id, report.title, 0)
+      } catch (e) {
+        console.error('Fallback notification failed:', e)
+      }
       
       return { data: updatedReport }
     }
