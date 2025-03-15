@@ -107,8 +107,8 @@ function LoginForm() {
         await supabase.auth.signOut()
         setPendingUserId(authData.user.id)
         setStep('totp')
-      } else if (preLoginData?.requiresEmailOTP) {
-        // No 2FA - send email OTP
+      } else {
+        // No TOTP set up - Email OTP is mandatory fallback for ALL users
         await supabase.auth.signOut()
         setPendingUserId(authData.user.id)
         
@@ -119,11 +119,6 @@ function LoginForm() {
         })
         
         setStep('email_otp')
-      } else {
-        // No verification needed - complete login
-        await api.logEvent('LOGIN')
-        router.push(redirectTo)
-        router.refresh()
       }
     } catch (err) {
       console.error('Login error:', err) // Debug log
@@ -260,6 +255,23 @@ function LoginForm() {
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to resend code')
+    }
+  }
+
+  // Switch from TOTP to Email OTP (for users who prefer email or don't have phone)
+  const handleSwitchToEmailOTP = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      await api.post('/api/auth/send-email-otp', { 
+        email, 
+        userId: pendingUserId 
+      })
+      setStep('email_otp')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send verification code')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -409,6 +421,7 @@ function LoginForm() {
             <TOTPVerificationStep
               onVerify={handleTOTPVerify}
               onUseBackupCode={() => setStep('backup_code')}
+              onUseEmailOTP={handleSwitchToEmailOTP}
               onCancel={resetLogin}
               error={error}
               isLoading={isLoading}

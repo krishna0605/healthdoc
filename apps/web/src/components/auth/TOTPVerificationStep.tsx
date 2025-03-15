@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Loader2, Shield, KeyRound, ArrowLeft } from 'lucide-react'
+import { Loader2, Shield, KeyRound, ArrowLeft, Mail } from 'lucide-react'
 
 interface TOTPVerificationStepProps {
   onVerify: (code: string) => Promise<void>
   onUseBackupCode: () => void
+  onUseEmailOTP?: () => void // NEW: Switch to email verification
   onCancel: () => void
   error?: string | null
   isLoading?: boolean
@@ -14,6 +15,7 @@ interface TOTPVerificationStepProps {
 export function TOTPVerificationStep({
   onVerify,
   onUseBackupCode,
+  onUseEmailOTP,
   onCancel,
   error,
   isLoading = false
@@ -140,13 +142,24 @@ export function TOTPVerificationStep({
         </button>
       </form>
 
-      {/* Backup code option */}
-      <div className="mt-6 text-center">
+      {/* Alternative verification options */}
+      <div className="mt-6 flex flex-col items-center gap-3">
+        {onUseEmailOTP && (
+          <button
+            type="button"
+            onClick={onUseEmailOTP}
+            disabled={isLoading}
+            className="text-sm text-primary hover:underline font-medium inline-flex items-center gap-1"
+          >
+            <Mail className="size-4" />
+            Use email verification instead
+          </button>
+        )}
         <button
           type="button"
           onClick={onUseBackupCode}
           disabled={isLoading}
-          className="text-sm text-primary hover:underline font-medium inline-flex items-center gap-1"
+          className="text-sm text-text-muted hover:text-primary font-medium inline-flex items-center gap-1 transition-colors"
         >
           <KeyRound className="size-4" />
           Use a backup code

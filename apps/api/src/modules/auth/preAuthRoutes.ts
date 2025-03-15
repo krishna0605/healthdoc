@@ -96,7 +96,7 @@ export default async function preAuthRoutes(fastify: FastifyInstance) {
 
       return {
         requires2FA: has2FA,
-        requiresEmailOTP: !has2FA,
+        requiresEmailOTP: true, // ALWAYS true - email OTP is mandatory fallback for all users
         userId: user.id
       }
     } catch (error) {
