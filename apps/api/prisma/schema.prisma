@@ -197,8 +197,10 @@ model Abnormality {
 }
 
 enum SeverityLevel {
+  LOW
   BORDERLINE
   MODERATE
+  HIGH
   CRITICAL
 }
 
