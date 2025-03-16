@@ -110,9 +110,12 @@ export default async function preAuthRoutes(fastify: FastifyInstance) {
   // POST /send-email-otp - Send OTP via email
   // ============================================
   fastify.post('/send-email-otp', async (request, reply) => {
+    console.log('[Email OTP] Received request to send OTP')
     const { email, userId } = request.body as { email: string; userId?: string }
+    console.log(`[Email OTP] Email: ${email}, UserId: ${userId}`)
 
     if (!email) {
+      console.log('[Email OTP] Error: Email is required')
       reply.code(400).send({ error: 'Email is required' })
       return
     }
@@ -120,6 +123,7 @@ export default async function preAuthRoutes(fastify: FastifyInstance) {
     // Rate limit: 3 sends per 5 minutes
     const rateLimitKey = `email-otp-send:${email}`
     if (!checkRateLimit(rateLimitKey, 3, 5 * 60 * 1000)) {
+      console.log('[Email OTP] Error: Rate limited')
       reply.code(429).send({ error: 'Too many requests. Please wait before requesting another code.' })
       return
     }
@@ -128,6 +132,7 @@ export default async function preAuthRoutes(fastify: FastifyInstance) {
       // Generate 6-digit OTP
       const otp = generateEmailOTP()
       const expiresAt = Date.now() + 10 * 60 * 1000 // 10 minutes
+      console.log(`[Email OTP] Generated OTP: ${otp}`)
 
       // Store OTP
       emailOtpStore.set(email.toLowerCase(), {
@@ -137,12 +142,14 @@ export default async function preAuthRoutes(fastify: FastifyInstance) {
       })
 
       // Send via custom email service (Resend)
+      console.log('[Email OTP] Calling sendEmail...')
       const emailData = verificationCodeEmail(otp)
       const emailSent = await sendEmail({
         to: email,
         subject: emailData.subject,
         html: emailData.html
       })
+      console.log(`[Email OTP] sendEmail result: ${emailSent}`)
 
       if (!emailSent) {
         throw new Error('Failed to send email via service')
