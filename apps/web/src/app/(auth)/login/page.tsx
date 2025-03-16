@@ -100,7 +100,7 @@ function LoginForm() {
       }
 
       // Check if user has 2FA enabled
-      const { data: preLoginData } = await api.post<{ requires2FA: boolean; requiresEmailOTP: boolean; userId: string }>('/api/auth/pre-login', { email })
+      const { data: preLoginData } = await api.postPublic<{ requires2FA: boolean; requiresEmailOTP: boolean; userId: string }>('/api/auth/pre-login', { email })
       
       if (preLoginData?.requires2FA) {
         // User has 2FA enabled - sign out from partial session and show TOTP screen
@@ -113,7 +113,7 @@ function LoginForm() {
         setPendingUserId(authData.user.id)
         
         // Send email OTP
-        await api.post('/api/auth/send-email-otp', { 
+        await api.postPublic('/api/auth/send-email-otp', { 
           email, 
           userId: authData.user.id 
         })
@@ -139,7 +139,7 @@ function LoginForm() {
 
     try {
       // Validate TOTP with our API
-      const { data, error: apiError } = await api.post<{ success: boolean; verified: boolean }>('/api/auth/validate-2fa-login', {
+      const { data, error: apiError } = await api.postPublic<{ success: boolean; verified: boolean }>('/api/auth/validate-2fa-login', {
         userId: pendingUserId,
         code,
         isBackupCode: false
@@ -178,7 +178,7 @@ function LoginForm() {
     setError(null)
 
     try {
-      const { data, error: apiError } = await api.post<{ success: boolean; verified: boolean }>('/api/auth/validate-2fa-login', {
+      const { data, error: apiError } = await api.postPublic<{ success: boolean; verified: boolean }>('/api/auth/validate-2fa-login', {
         userId: pendingUserId,
         code,
         isBackupCode: true
@@ -215,7 +215,7 @@ function LoginForm() {
     setError(null)
 
     try {
-      const { data, error: apiError } = await api.post<{ success: boolean; verified: boolean }>('/api/auth/verify-email-otp', {
+      const { data, error: apiError } = await api.postPublic<{ success: boolean; verified: boolean }>('/api/auth/verify-email-otp', {
         email,
         code,
         userId: pendingUserId
@@ -249,7 +249,7 @@ function LoginForm() {
   // Resend email OTP
   const handleResendEmailOTP = async () => {
     try {
-      await api.post('/api/auth/send-email-otp', { 
+      await api.postPublic('/api/auth/send-email-otp', { 
         email, 
         userId: pendingUserId 
       })
@@ -263,7 +263,7 @@ function LoginForm() {
     setIsLoading(true)
     setError(null)
     try {
-      await api.post('/api/auth/send-email-otp', { 
+      await api.postPublic('/api/auth/send-email-otp', { 
         email, 
         userId: pendingUserId 
       })

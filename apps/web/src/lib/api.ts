@@ -86,6 +86,31 @@ export const api = {
   },
 
   /**
+   * Make an unauthenticated POST request (for pre-login 2FA operations)
+   */
+  async postPublic<T = any>(endpoint: string, body: any): Promise<{ data: T; error?: string }> {
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        return { data: null as any, error: errorData.error || `Request failed: ${response.status}` }
+      }
+
+      const result = await response.json()
+      return { data: result.data || result }
+    } catch (error: any) {
+      return { data: null as any, error: error.message || 'Network error' }
+    }
+  },
+
+  /**
    * Make an authenticated PUT request
    */
   async put<T = any>(endpoint: string, body: any): Promise<{ data: T; error?: string }> {
