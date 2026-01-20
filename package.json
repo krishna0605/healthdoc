@@ -1,0 +1,28 @@
+{
+  "name": "healthdoc",
+  "version": "0.0.1",
+  "private": true,
+  "description": "AI-powered medical document intelligence platform",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean",
+    "db:migrate": "pnpm --filter @healthdoc/api db:migrate",
+    "db:push": "pnpm --filter @healthdoc/api db:push",
+    "db:studio": "pnpm --filter @healthdoc/api db:studio"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.3.0",
+    "prettier": "^3.1.0",
+    "eslint": "^8.55.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

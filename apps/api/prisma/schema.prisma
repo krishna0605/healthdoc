@@ -1,0 +1,327 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============ USER & AUTH ============
+// Note: Supabase Auth handles users, but we reference them here
+
+model Profile {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id") // Supabase Auth user ID
+  name      String?
+  role      UserRole @default(PATIENT)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  reports   Report[]
+  auditLogs AuditLog[]
+
+  @@map("profiles")
+}
+
+enum UserRole {
+  PATIENT
+  ADMIN
+  AUDITOR
+}
+
+// ============ FAMILY PROFILES ============
+
+model FamilyMember {
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")  // Owner's Supabase auth user ID
+  name         String
+  relationship String    // self, child, parent, spouse, other
+  dateOfBirth  DateTime? @map("date_of_birth")
+  gender       String?   // male, female, other
+  avatarColor  String    @default("#3B82F6") @map("avatar_color")
+  isDefault    Boolean   @default(false) @map("is_default")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  reports      Report[]
+
+  @@index([userId])
+  @@map("family_members")
+}
+
+// ============ REPORTS ============
+
+model Report {
+  id               String        @id @default(cuid())
+  userId           String        @map("user_id")
+  familyMemberId   String?       @map("family_member_id")
+  title            String
+  originalFileName String        @map("original_file_name")
+  fileUrl          String        @map("file_url")
+  filePath         String?       @map("file_path")
+  fileType         FileType      @map("file_type")
+  status           ReportStatus  @default(UPLOADED)
+  extractedText    String?       @map("extracted_text") @db.Text
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+  processedAt      DateTime?     @map("processed_at")
+
+  profile      Profile           @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  familyMember FamilyMember?     @relation(fields: [familyMemberId], references: [id], onDelete: SetNull)
+  analysis     Analysis?
+  metrics      Metric[]
+  embeddings   ReportEmbedding[]
+  sharedLinks  SharedLink[]
+
+  @@index([userId])
+  @@index([familyMemberId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("reports")
+}
+
+enum FileType {
+  PDF
+  IMAGE
+  TEXT
+}
+
+enum ReportStatus {
+  UPLOADED
+  OCR_PROCESSING
+  OCR_COMPLETE
+  ANALYSIS_PROCESSING
+  ANALYSIS_COMPLETE
+  EMBEDDING_PROCESSING
+  READY
+  FAILED
+}
+
+// ============ ANALYSIS ============
+
+model Analysis {
+  id                 String   @id @default(cuid())
+  reportId           String   @unique @map("report_id")
+  patientName        String?  @map("patient_name")
+  labName            String?  @map("lab_name")
+  reportDate         String?  @map("report_date")
+  reportDescription  String?  @map("report_description") @db.Text
+  patientSummary     String   @map("patient_summary") @db.Text
+  clinicalSummary    String   @map("clinical_summary") @db.Text
+  keyFindings        Json     @map("key_findings")
+  abnormalityCount   Int      @default(0) @map("abnormality_count")
+  overallRiskScore   Float?   @map("overall_risk_score")
+  confidenceScore    Float?   @map("confidence_score")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  report         Report          @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  abnormalities  Abnormality[]
+  riskIndicators RiskIndicator[]
+
+  @@index([reportId])
+  @@map("analyses")
+}
+
+model Metric {
+  id              String       @id @default(cuid())
+  reportId        String       @map("report_id")
+  name            String
+  value           Float
+  unit            String
+  normalRangeLow  Float?       @map("normal_range_low")
+  normalRangeHigh Float?       @map("normal_range_high")
+  status          MetricStatus
+  category        String?
+  extractedText   String?      @map("extracted_text")
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@index([name])
+  @@map("metrics")
+}
+
+enum MetricStatus {
+  NORMAL
+  LOW
+  HIGH
+  CRITICAL_LOW
+  CRITICAL_HIGH
+}
+
+model Abnormality {
+  id              String        @id @default(cuid())
+  analysisId      String        @map("analysis_id")
+  metricName      String        @map("metric_name")
+  severity        SeverityLevel
+  description     String
+  clinicalContext String?       @map("clinical_context") @db.Text
+  relatedMetrics  String[]      @map("related_metrics")
+  confidenceScore Float?        @map("confidence_score")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@index([analysisId])
+  @@index([severity])
+  @@map("abnormalities")
+}
+
+enum SeverityLevel {
+  BORDERLINE
+  MODERATE
+  CRITICAL
+}
+
+model RiskIndicator {
+  id                  String   @id @default(cuid())
+  analysisId          String   @map("analysis_id")
+  riskType            String   @map("risk_type")
+  score               Float
+  explanation         String   @db.Text
+  contributingMetrics String[] @map("contributing_metrics")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@index([analysisId])
+  @@map("risk_indicators")
+}
+
+// ============ RAG & EMBEDDINGS ============
+
+model ReportEmbedding {
+  id         String   @id @default(cuid())
+  reportId   String   @map("report_id")
+  chunkIndex Int      @map("chunk_index")
+  chunkText  String   @map("chunk_text") @db.Text
+  vectorId   String   @map("vector_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, chunkIndex])
+  @@index([reportId])
+  @@map("report_embeddings")
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  reportId  String?  @map("report_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  messages Message[]
+
+  @@index([userId])
+  @@index([reportId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String      @map("conversation_id")
+  role           MessageRole
+  content        String      @db.Text
+  sources        Json?
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("messages")
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+// ============ AUDIT & COMPLIANCE ============
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?  @map("user_id")
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  metadata     Json?
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  profile Profile? @relation(fields: [userId], references: [userId], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============ PHASE 8: SHARING ============
+
+model SharedLink {
+  id        String   @id @default(uuid())
+  reportId  String   @map("report_id")
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  viewCount Int      @default(0) @map("view_count")
+  maxViews  Int      @default(10) @map("max_views")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("shared_links")
+}
+
+model NotificationPreference {
+  userId          String   @id @map("user_id")
+  emailOnComplete Boolean  @default(true) @map("email_on_complete")
+  emailOnAbnormal Boolean  @default(true) @map("email_on_abnormal")
+  weeklyDigest    Boolean  @default(false) @map("weekly_digest")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // No relation needed as we link by userId manually
+  
+  @@map("notification_preferences")
+}
+
+// ============ IN-APP NOTIFICATIONS ============
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  type      String   // report_ready, abnormal_alert, system
+  title     String
+  message   String
+  link      String?  // Optional link to related resource
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+// ============ TWO-FACTOR AUTHENTICATION ============
+
+model TwoFactorAuth {
+  id          String    @id @default(cuid())
+  userId      String    @unique @map("user_id")
+  secret      String    // Encrypted TOTP secret
+  isEnabled   Boolean   @default(false) @map("is_enabled")
+  backupCodes String[]  @map("backup_codes") // Hashed backup codes
+  createdAt   DateTime  @default(now()) @map("created_at")
+  verifiedAt  DateTime? @map("verified_at")
+
+  @@map("two_factor_auth")
+}
