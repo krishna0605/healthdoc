@@ -403,24 +403,45 @@ export async function reportRoutes(fastify: FastifyInstance) {
   
   // Helper function to generate smart fallback responses
   function generateFallbackResponse(report: any, question: string) {
+    const analysis = report.analysis || {};
+    const summary = analysis.patientSummary || analysis.reportDescription || "No detailed summary available.";
+    const findings = analysis.keyFindings?.join('\n- ') || "No specific key findings listed.";
+    
     // Get report analysis data if available
     const getAnswerBasedOnQuestion = () => {
       const q = question.toLowerCase()
       
+      // 1. Summary / About / Diagnosis
+      if (q.includes('about') || q.includes('summary') || q.includes('diagnosis') || q.includes('explain') || q.includes('what is')) {
+        return `**Report Overview**:\n${summary}\n\n**Category**: ${analysis.reportType || 'General Health Report'}\n**Tags**: ${analysis.tags?.join(', ') || 'None'}`;
+      }
+
+      // 2. Findings / Results / Main points
       if (q.includes('finding') || q.includes('result') || q.includes('main')) {
-        return `Based on your report "${report.title}", here are the key findings:\n\n📋 **Report Summary**:\nThis report has been analyzed and contains your health metrics. The analysis identified values that are within normal ranges as well as some that may need attention.\n\n🔬 **What This Means**:\nYour results have been compared against standard medical reference ranges. Any values outside normal ranges are highlighted for your awareness.\n\n💡 **Next Steps**:\nFor a detailed interpretation of these specific results, please consult with your healthcare provider who can provide personalized medical advice based on your complete health history.`
+        return `**Key Findings**:\n- ${findings}\n\nFor full details, please check the specific metrics in the report dashboard.`;
       }
       
-      if (q.includes('normal') || q.includes('abnormal') || q.includes('concern')) {
-        return `Looking at your report "${report.title}":\n\n✅ **Normal Values**: Most of your test results fall within the expected reference ranges, which is a positive sign.\n\n⚠️ **Areas of Note**: Some values may be slightly outside normal ranges. These are highlighted in your detailed results.\n\n📊 **Understanding Your Results**:\nSmall variations from reference ranges are common and not always concerning. However, your healthcare provider can best interpret these in the context of your overall health.`
+      // 3. Status / Abnormal / Normal
+      if (q.includes('normal') || q.includes('abnormal') || q.includes('concern') || q.includes('bad') || q.includes('good')) {
+        const abnormalMetrics = report.metrics?.filter((m: any) => m.status !== 'NORMAL') || [];
+        if (abnormalMetrics.length > 0) {
+           const list = abnormalMetrics.map((m: any) => `- **${m.name}**: ${m.value} ${m.unit} (${m.status})`).join('\n');
+           return `Most values are normal, but here are a few that stand out:\n\n${list}\n\n*Please discuss these specific results with your doctor.*`;
+        }
+        return `Good news! most extracted data appears to be within standard ranges. However, always verify this with your healthcare provider.`;
       }
       
-      if (q.includes('recommend') || q.includes('should') || q.includes('advice')) {
-        return `Based on the analysis of "${report.title}":\n\n💡 **General Recommendations**:\n\n1. **Review with your doctor** - Share these results with your healthcare provider for personalized guidance\n\n2. **Monitor trends** - Keep track of your health metrics over time\n\n3. **Lifestyle factors** - Maintain a healthy diet, regular exercise, and adequate sleep\n\n4. **Follow-up testing** - Your doctor may recommend additional tests based on these results\n\n⚕️ *Note: This is general health information and not a substitute for professional medical advice.*`
+      // 4. Advice / Recommendations
+      if (q.includes('recommend') || q.includes('should') || q.includes('advice') || q.includes('do next')) {
+         const preds = analysis.predictions?.map((p: string) => p.replace('CAUTION: AI PREDICTION', '').trim()).join('\n- ') || "";
+         if (preds) {
+             return `**AI Suggestions** (Not Medical Advice):\n- ${preds}\n\n**General Steps**:\n1. Consult your doctor.\n2. Monitor any symptoms.\n3. Follow the prescribed treatment plan if applicable.`;
+         }
+        return `Based on the analysis of "${report.title}":\n\n1. **Review with your doctor** - Share these results for personalized guidance.\n2. **Monitor trends** - Keep track of changes over time.\n3. **Healthy Lifestyle** - Maintain good consulting habits.\n\n*Note: This is general info, not medical advice.*`;
       }
       
-      // Default response
-      return `Thank you for your question about "${report.title}".\n\n📊 **Your Report Analysis**:\nThis medical report has been processed and analyzed. The key health metrics have been extracted and compared against standard reference ranges.\n\n🔍 **What I Can Help With**:\n- Understanding your test results\n- Explaining what different values mean\n- Highlighting areas that may need attention\n\n💬 **Try asking**:\n- "What are the main findings?"\n- "Are there any abnormal values?"\n- "What should I discuss with my doctor?"\n\n_(Note: For detailed medical interpretation, please consult with your healthcare provider.)_`
+      // Default response (Dynamic instead of static)
+      return `I'm focusing on your report "${report.title}" (${analysis.reportType || 'Medical Report'}).\n\n**Summary**: ${summary.substring(0, 150)}...\n\nYou can ask me about:\n- "What are the key findings?"\n- "Are there any abnormal results?"\n- "What should I do next?"`;
     }
     
     return { 

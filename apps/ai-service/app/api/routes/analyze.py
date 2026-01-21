@@ -263,16 +263,23 @@ async def analyze_report(request: AnalyzeRequest):
 def get_analysis_prompt() -> str:
     return """Analyze this medical report/image and provide a detailed structured JSON response.
     
-    1. **Identify the Report Type**: Classify as one of: ["LAB_REPORT", "PRESCRIPTION", "RADIOLOGY" (X-Ray/MRI/CT), "PATHOLOGY", "OTHER"].
-    2. **Generate Tags**: Create a list of relevant tags (e.g., "Blood Test", "Thyroid", "Chest X-Ray", "Antibiotics", "Fracture").
+    1. **Identify the Report Type**:
+       - **RADIOLOGY**: STRICTLY for X-Rays, MRI, CT Scans, Ultrasounds, or any imaging reports.
+       - **LAB_REPORT**: For blood tests, urine tests, pathology, etc.
+       - **PRESCRIPTION**: For doctor's notes, medications, scripts.
+       - **PATHOLOGY**: For biopsy, tissue analysis.
+       - **OTHER**: If none of the above.
+       
+    2. **Generate Tags**: Create a list of 3-5 relevant tags (e.g., "MRI Knee", "Blood Test", "Lipid Panel", "Antibiotics", "Fracture").
+    
     3. **Extraction**:
-       - **Lab Report**: Extract ALL test names, values, and units. If a reference range is missing, PROVIDE THE STANDARD MEDICAL RANGE for a healthy adult. Infer the status (NORMAL/LOW/HIGH) based on the range.
-       - **Prescription**: Extract medicine names, dosages, frequencies, and duration as 'key_findings'.
-       - **Radiology**: Extract the 'Impression', 'Findings', and 'Body Part' as 'report_description' and 'key_findings'.
+       - **Lab Report**: Extract ALL test names, values, units, and reference ranges. Infer status (NORMAL/LOW/HIGH).
+       - **Prescription**: Extract medicine names, dosages, frequencies, and duration.
+       - **Radiology/Imaging**: Extract 'Impression', 'Findings', 'Technique', and 'Body Part'.
     
     4. **Detailed Analysis**:
-       - **Patient Summary**: A DETAILED, plain-language explanation (at least 2 paragraphs). Explain what the results mean for the patient's health.
-       - **Predictions**: Based on the findings, list potential risks or future conditions.
+       - **Patient Summary**: A COMPREHENSIVE, plain-language explanation (minimum 3 paragraphs). Explain the medical terms, what the results indicate, and the overall health picture.
+       - **Predictions**: Based on the findings, list potential future risks, follow-up actions, or conditions to watch out for.
        - **Disclaimer**: YOU MUST PREPEND "CAUTION: AI PREDICTION" to any prediction.
 
     Return a JSON object with this EXACT structure:
@@ -282,12 +289,12 @@ def get_analysis_prompt() -> str:
       "report_date": "YYYY-MM-DD or null",
       "report_type": "LAB_REPORT",
       "tags": ["Tag1", "Tag2"],
-      "report_description": "Detailed summary (2+ paragraphs) of what this report is.",
-      "extracted_text": "Concise text dump of the report content.",
-      "patient_summary": "Detailed plain-language summary.",
+      "report_description": "Brief description of the report type.",
+      "extracted_text": "Full text content of the report.",
+      "patient_summary": "Detailed plain-language summary (3+ paragraphs).",
       "clinical_summary": "Technical summary for a doctor.",
       "key_findings": ["Finding 1", "Finding 2"],
-      "predictions": ["CAUTION: AI PREDICTION - Risk of X", "CAUTION: AI PREDICTION - Possible Y"],
+      "predictions": ["CAUTION: AI PREDICTION - Risk of X...", "CAUTION: AI PREDICTION - Suggestion Y..."],
       "metrics": [
         {
           "name": "Hemoglobin",
@@ -309,8 +316,6 @@ def get_analysis_prompt() -> str:
     }
     
     IMPORTANT: 
-    - Do not invent values for metrics that are effectively missing.
-    - BUT DO provide standard ranges and categories for metrics that ARE present.
-    - Be exhaustive with metrics; extract as many as you can clearly identify.
-    - For images (X-ray, etc.), describe them in detail in 'report_description' and 'key_findings'.
-    - Return ONLY the JSON object, no markdown code blocks."""
+    - If it's an image (MRI/CT), describe the visual findings in detail in 'report_description'.
+    - Do not hallucinate values.
+    - Return ONLY the JSON object."""
